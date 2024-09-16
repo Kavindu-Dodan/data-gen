@@ -30,7 +30,6 @@ func (r *runner) start(concurrent int, delay time.Duration) {
 				case <-time.After(delay):
 					r.log.Info(fmt.Sprintf("log entry: %s", uuid.NewString()))
 				case _ = <-r.shutdown:
-					r.log.Info("Shutting down")
 					return
 				}
 			}
