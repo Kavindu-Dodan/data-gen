@@ -1,4 +1,4 @@
-module kLog
+module data-gen
 
 go 1.23.0
 

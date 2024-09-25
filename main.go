@@ -21,15 +21,18 @@ import (
 
 const (
 	region             = "us-east-1"
-	firehoseStreamName = ""
+	firehoseStreamName = "kavindu-firehose"
 	outFirehose        = "FIREHOSE"
-	outLogs            = "LOGS"
+	outFile            = "FILE"
+	typeLogs           = "LOGS"
+	typeMetrics        = "METRICS"
 )
 
-type cfg struct {
+type Cfg struct {
+	Type           string `json:"type"`
 	LogOutput      string `json:"output,logOutput"`
 	Processors     int    `json:"processors,omitempty"`
-	LogDelay       int    `json:"log_delay,omitempty"`
+	Delay          int    `json:"delay,omitempty"`
 	LogLocation    string `json:"log_location,omitempty"`
 	MaxLogFileSize int    `json:"max_log_file_size,omitempty"`
 }
@@ -42,10 +45,10 @@ var (
 	location         = "./logs"
 	maxLogFileSizeMb = 10
 
-	currentConfig = cfg{
+	currentConfig = Cfg{
 		LogOutput:      output,
 		Processors:     processors,
-		LogDelay:       delay,
+		Delay:          delay,
 		LogLocation:    location,
 		MaxLogFileSize: maxLogFileSizeMb,
 	}
@@ -57,17 +60,16 @@ func main() {
 		slog.Error("Error marshalling config", err)
 		return
 	}
+	slog.Info(fmt.Sprintf("Starting with configurations: %v", string(marshal)))
 
 	shutdownChan := make(chan interface{})
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
-	slog.Info(fmt.Sprintf("Starting with configurations: %v", string(marshal)))
-
 	// choose log writer
 	var sync zapcore.WriteSyncer
 	switch currentConfig.LogOutput {
-	case outLogs:
+	case outFile:
 		// logs to file with rotation
 		sync = zapcore.AddSync(&lumberjack.Logger{
 			Filename: location,
@@ -76,7 +78,10 @@ func main() {
 	case outFirehose:
 		// firehose emitter
 		gCtx := context.Background()
-		cfg, err := config.LoadDefaultConfig(gCtx, config.WithSharedConfigProfile("ecdev"), config.WithRegion(region))
+
+		//cfg, err := config.LoadDefaultConfig(gCtx, config.WithSharedConfigProfile("ecdev"), config.WithRegion(region))
+		cfg, err := config.LoadDefaultConfig(gCtx)
+
 		if err != nil {
 			slog.Error("error loading default configurations: ", err)
 			return

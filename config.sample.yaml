@@ -1,0 +1,17 @@
+# Data type to generate. Supports LOGS, METRICS
+type: LOGS
+
+# Output stream. Supports FILE, FIREHOSE
+output: FILE
+
+# Number of parallel processors to generate data. Default - 1
+processors: 1
+
+# Delay between a data point per processor in seconds. Default - 5
+delay: 5
+
+# Output location of the logs. Applicable only for type: Logs. Default ./logs
+log_location:
+
+# Max log file size. Useful for log rotation
+max_log_file_size:
