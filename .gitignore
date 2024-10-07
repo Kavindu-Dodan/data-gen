@@ -1,4 +1,4 @@
 /.idea
 /.vscode
 ./out
-config.yaml
+config*.yaml
