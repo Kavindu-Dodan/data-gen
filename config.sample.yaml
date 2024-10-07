@@ -1,7 +1,7 @@
 # Data type to generate. Supports LOGS, METRICS
 type: LOGS
 
-# Output stream. Supports FILE, FIREHOSE
+# Output stream. Supports FILE, FIREHOSE, CLOUDWATCH_LOG
 output: FILE
 
 # Delay between a data point per processor in seconds. Default - 5
@@ -14,7 +14,18 @@ file_location:
 aws:
   # Region. Default us-east-1
   region: us-east-1
-  # Firehose stream name
-  firehoseStreamName: my-stream
   # AWS credential profile. Default to default
   profile: default
+
+
+  # Exporter specific configurations
+
+  # Valid only with output FIREHOSE
+  # Firehose stream name
+  firehoseStreamName: my-stream
+
+  # Valid only with output CLOUDWATCH_LOG
+  # Cloudwatch Log group stream name
+  cloudwatchLogGroup:
+  # Cloudwatch stream name
+  cloudwatchLogStreamName:

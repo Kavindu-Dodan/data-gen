@@ -4,10 +4,11 @@ import (
 	"context"
 	"data-gen/conf"
 	"fmt"
+	"log/slog"
+
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/firehose"
 	"github.com/aws/aws-sdk-go-v2/service/firehose/types"
-	"log/slog"
 )
 
 type FirehoseExporter struct {

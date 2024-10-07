@@ -89,6 +89,8 @@ func makeExporter(ctx context.Context, cfg *conf.Cfg) (exporters.IExport, error)
 		return exporters.NewFileExporter(cfg.FileLocation), nil
 	case conf.OutFirehose:
 		return exporters.NewFirehoseExporter(ctx, cfg.AWSCfg)
+	case conf.OutCloudwatchLogs:
+		return exporters.NewCloudWatchLogExporter(ctx, cfg.AWSCfg)
 	default:
 		return nil, fmt.Errorf("unknown exporter output: %s", cfg.Output)
 	}

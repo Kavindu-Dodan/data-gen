@@ -7,10 +7,11 @@ import (
 )
 
 const (
-	OutFirehose = "FIREHOSE"
-	OutFile     = "FILE"
-	TypeLogs    = "LOGS"
-	TypeMetrics = "METRICS"
+	OutFirehose       = "FIREHOSE"
+	OutFile           = "FILE"
+	OutCloudwatchLogs = "CLOUDWATCH_LOG"
+	TypeLogs          = "LOGS"
+	TypeMetrics       = "METRICS"
 
 	defaultProfile      = "default"
 	defaultRegion       = "us-east-1"
@@ -27,9 +28,11 @@ type Cfg struct {
 }
 
 type AWSCfg struct {
-	Profile            string `yaml:"profile"`
-	Region             string `yaml:"region"`
-	FirehoseStreamName string `yaml:"firehoseStreamName"`
+	Profile                 string `yaml:"profile"`
+	Region                  string `yaml:"region"`
+	FirehoseStreamName      string `yaml:"firehoseStreamName"`
+	CloudwatchLogGroup      string `yaml:"cloudwatchLogGroup"`
+	CloudwatchLogStreamName string `yaml:"cloudwatchLogStreamName"`
 }
 
 func NewCfgFrom(from []byte) (*Cfg, error) {

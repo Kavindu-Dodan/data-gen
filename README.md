@@ -27,3 +27,4 @@ Check [ecs-logging-go-zap](https://github.com/elastic/ecs-logging-go-zap) for ad
 #### Metrics
 
 Generate metrics similar to a CloudWatch metrics entry. Limited support and tobe improved
+
