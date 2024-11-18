@@ -1,7 +1,7 @@
 # Data type to generate. Supports LOGS, METRICS
 type: LOGS
 
-# Output stream. Supports FILE, FIREHOSE, CLOUDWATCH_LOG
+# Output stream. Supports FILE, FIREHOSE, CLOUDWATCH_LOG, S3
 output: FILE
 
 # Delay between a data point per processor in seconds. Default - 5
@@ -29,3 +29,10 @@ aws:
   cloudwatchLogGroup:
   # Cloudwatch stream name
   cloudwatchLogStreamName:
+
+
+  # Valid only with output S3
+  # Required - S3 bucket to push data
+  s3Bucket:
+  # Optional - Amount of time between two bucket entries in seconds. Default to 120 seconds
+  bucketSeconds:

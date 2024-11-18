@@ -10,6 +10,7 @@ const (
 	OutFirehose       = "FIREHOSE"
 	OutFile           = "FILE"
 	OutCloudwatchLogs = "CLOUDWATCH_LOG"
+	OutS3Bucket       = "S3"
 	TypeLogs          = "LOGS"
 	TypeMetrics       = "METRICS"
 
@@ -30,6 +31,8 @@ type Cfg struct {
 type AWSCfg struct {
 	Profile                 string `yaml:"profile"`
 	Region                  string `yaml:"region"`
+	S3Bucket                string `yaml:"s3Bucket"`
+	BucketPeriodSeconds     int    `yaml:"bucketSeconds"`
 	FirehoseStreamName      string `yaml:"firehoseStreamName"`
 	CloudwatchLogGroup      string `yaml:"cloudwatchLogGroup"`
 	CloudwatchLogStreamName string `yaml:"cloudwatchLogStreamName"`
