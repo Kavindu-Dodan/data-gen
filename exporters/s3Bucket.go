@@ -54,7 +54,6 @@ func (s *S3BucketExporter) Start(c <-chan []byte, errChan chan error) {
 			select {
 			case d := <-c:
 				sb.Write(d)
-				sb.WriteByte('\n')
 
 				if time.Since(lastStart) > s.timePeriod {
 					// upload to S3
