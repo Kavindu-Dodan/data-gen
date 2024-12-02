@@ -11,14 +11,14 @@ import (
 	"time"
 )
 
-const objPrefix = "logFile-"
 const defaultBucketingPeriod = 2 * time.Minute
 
 type S3BucketExporter struct {
-	bucketName string
-	timePeriod time.Duration
-	client     *s3.Client
-	shChan     chan struct{}
+	bucketName   string
+	bucketPrefix string
+	timePeriod   time.Duration
+	client       *s3.Client
+	shChan       chan struct{}
 }
 
 func NewS3BucketExporter(ctx context.Context, awsConfig conf.AWSCfg) (*S3BucketExporter, error) {
@@ -39,10 +39,11 @@ func NewS3BucketExporter(ctx context.Context, awsConfig conf.AWSCfg) (*S3BucketE
 	}
 
 	return &S3BucketExporter{
-		bucketName: awsConfig.S3Bucket,
-		timePeriod: bucketing,
-		client:     client,
-		shChan:     make(chan struct{}),
+		bucketName:   awsConfig.S3Bucket,
+		bucketPrefix: awsConfig.BucketPrefix,
+		timePeriod:   bucketing,
+		client:       client,
+		shChan:       make(chan struct{}),
 	}, nil
 }
 
@@ -57,7 +58,7 @@ func (s *S3BucketExporter) Start(c <-chan []byte, errChan chan error) {
 
 				if time.Since(lastStart) > s.timePeriod {
 					// upload to S3
-					key := fmt.Sprintf("%s%s", objPrefix, time.Now().Format("2006-01-02_15-04-05"))
+					key := fmt.Sprintf("%s%s", s.bucketPrefix, time.Now().Format("2006-01-02_15-04-05"))
 
 					input := s3.PutObjectInput{
 						Bucket: &s.bucketName,

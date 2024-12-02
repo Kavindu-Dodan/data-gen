@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"log/slog"
@@ -14,6 +15,7 @@ const (
 	TypeLogs          = "LOGS"
 	TypeMetrics       = "METRICS"
 
+	defaultBucketPrefix = "logFile-"
 	defaultProfile      = "default"
 	defaultRegion       = "us-east-1"
 	defaultFileLocation = "./out"
@@ -32,6 +34,7 @@ type AWSCfg struct {
 	Profile                 string `yaml:"profile"`
 	Region                  string `yaml:"region"`
 	S3Bucket                string `yaml:"s3Bucket"`
+	BucketPrefix            string `yaml:"bucketPrefix"`
 	BucketPeriodSeconds     int    `yaml:"bucketSeconds"`
 	FirehoseStreamName      string `yaml:"firehoseStreamName"`
 	CloudwatchLogGroup      string `yaml:"cloudwatchLogGroup"`
@@ -61,6 +64,13 @@ func NewCfgFrom(from []byte) (*Cfg, error) {
 		}
 	}
 
+	if cfg.Output == OutS3Bucket {
+		err := s3Cfg(&cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if cfg.Delay == 0 {
 		cfg.Delay = defaultDelay
 	}
@@ -71,6 +81,19 @@ func NewCfgFrom(from []byte) (*Cfg, error) {
 func fileCfg(cfg *Cfg) error {
 	if cfg.FileLocation == "" {
 		cfg.FileLocation = defaultFileLocation
+	}
+
+	return nil
+}
+
+func s3Cfg(cfg *Cfg) error {
+	if cfg.S3Bucket == "" {
+		return errors.New("s3Bucket is required")
+	}
+
+	if cfg.BucketPrefix == "" {
+		slog.Info(fmt.Sprintf("using default bucket prefix '%s' ", defaultBucketPrefix))
+		cfg.BucketPrefix = defaultBucketPrefix
 	}
 
 	return nil
