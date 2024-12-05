@@ -49,7 +49,7 @@ func (m *MetricGenerator) Stop() {
 }
 
 func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {
-	t := time.Now().UnixMilli()
+	t := time.Now().Unix()
 
 	gen := metricStruct{
 		MetricStreamName: "AWSMetrics",
@@ -62,10 +62,10 @@ func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {
 		},
 		Timestamp: t,
 		Value: value{
-			Count: float64(rand.Intn(100)),
-			Sum:   float64(rand.Intn(100)),
-			Max:   float64(rand.Intn(100)),
-			Min:   float64(rand.Intn(100)),
+			Count: rand.Intn(100),
+			Sum:   rand.Intn(100),
+			Max:   rand.Intn(100),
+			Min:   rand.Intn(100),
 		},
 		Unit: "Seconds",
 	}
@@ -91,10 +91,10 @@ type metricStruct struct {
 }
 
 type value struct {
-	Count float64 `json:"count"`
-	Sum   float64 `json:"sum"`
-	Max   float64 `json:"max"`
-	Min   float64 `json:"min"`
+	Count int `json:"count"`
+	Sum   int `json:"sum"`
+	Max   int `json:"max"`
+	Min   int `json:"min"`
 }
 
 type dimensions struct {
