@@ -49,7 +49,7 @@ func (m *MetricGenerator) Stop() {
 }
 
 func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {
-	t := time.Now().Unix()
+	t := time.Now().UnixMilli()
 
 	gen := metricStruct{
 		MetricStreamName: "AWSMetrics",
@@ -62,10 +62,10 @@ func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {
 		},
 		Timestamp: t,
 		Value: value{
-			Count: rand.Intn(100),
-			Sum:   rand.Intn(100),
-			Max:   rand.Intn(100),
-			Min:   rand.Intn(100),
+			Count: rand.Intn(100) + 1,
+			Sum:   rand.Intn(100) + 1,
+			Max:   rand.Intn(100) + 1,
+			Min:   rand.Intn(100) + 1,
 		},
 		Unit: "Seconds",
 	}
