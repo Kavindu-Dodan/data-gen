@@ -4,13 +4,13 @@ type: LOGS
 # Output stream. Supports FILE, FIREHOSE, CLOUDWATCH_LOG, S3
 output: FILE
 
-# Delay between a data point per processor in seconds. Default - 5
+# Delay between a data point per processor in seconds. Default - 5s
 delay: 5
 
 # Output location for FILE output. Default ./out
 file_location:
 
-# AWS configurations. Used for FIREHOSE output
+# AWS configurations. Used for any AWS output
 aws:
   # Region. Default us-east-1
   region: us-east-1
@@ -36,3 +36,5 @@ aws:
   s3Bucket:
   # Optional - Amount of time between two bucket entries in seconds. Default to 120 seconds
   bucketSeconds:
+  # optional - bucket prefix to use. Default to 'logFile-'
+  bucketPrefix:
