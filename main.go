@@ -57,7 +57,14 @@ func main() {
 	}
 
 	errChan := make(chan error, 2)
-	outChan := generator.Start(time.Duration(configurations.Delay)*time.Second, errChan)
+
+	duration, err := time.ParseDuration(configurations.Delay)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Error parsing delay: %s, please provide value in acceptable string format like `5s`", err.Error()))
+		return
+	}
+
+	outChan := generator.Start(duration, errChan)
 	exporter.Start(outChan, errChan)
 
 	select {

@@ -4,8 +4,9 @@ type: LOGS
 # Output stream. Supports FILE, FIREHOSE, CLOUDWATCH_LOG, S3
 output: FILE
 
-# Delay between a data point per processor in seconds. Default - 5s
-delay: 5
+## Delay between a data point per processor. Accepts value in acceptable format like `5s` for five seconds or `100ms` for 100 milliseconds
+## Default is 5 seconds
+#delay: 5s
 
 # Output location for FILE output. Default ./out
 file_location:
