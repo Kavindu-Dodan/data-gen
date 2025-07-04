@@ -19,13 +19,13 @@ const (
 	defaultProfile      = "default"
 	defaultRegion       = "us-east-1"
 	defaultFileLocation = "./out"
-	defaultDelay        = 5
+	defaultDelay        = "5s"
 )
 
 type Cfg struct {
 	Type         string `yaml:"type"`
 	Output       string `yaml:"output"`
-	Delay        int    `yaml:"delay"`
+	Delay        string `yaml:"delay"`
 	FileLocation string `yaml:"file_location,omitempty"`
 	AWSCfg       `yaml:"aws,omitempty"`
 }
@@ -71,7 +71,7 @@ func NewCfgFrom(from []byte) (*Cfg, error) {
 		}
 	}
 
-	if cfg.Delay == 0 {
+	if cfg.Delay == "" {
 		cfg.Delay = defaultDelay
 	}
 
