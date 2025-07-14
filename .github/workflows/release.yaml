@@ -1,19 +1,56 @@
+name: release-please
+
 on:
   push:
     branches:
       - main
-
 permissions:
   contents: write
   pull-requests: write
 
-name: release-please
+# Environment variables available to all jobs.
+env:
+  BINARY_NAME: dataGenerator
+  OUTPUT_DIR: release
 
 jobs:
-  release-please:
+  release:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release_please.outputs.release_created }}
+      tag_name: ${{ steps.release_please.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release_please
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: simple
+
+  build:
+    if: ${{ needs.release.outputs.release_created }}
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup GO
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # Builds the binaries for Linux (amd64) and macOS (arm64).
+      - name: Build macOS and Linux binaries
+        run: |
+          mkdir -p ${{ env.OUTPUT_DIR }}
+          GOOS=linux GOARCH=amd64 go build -o ${{ env.OUTPUT_DIR }}/${{ env.BINARY_NAME }}_linux_amd64 ./cmd
+          GOOS=darwin GOARCH=arm64 go build -o ${{ env.OUTPUT_DIR }}/${{ env.BINARY_NAME }}_darwin_arm64 ./cmd
+
+      - name: Upload binaries to release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ needs.release.outputs.tag_name }}
+          files: |
+            ${{ env.OUTPUT_DIR }}/${{ env.BINARY_NAME }}_linux_amd64
+            ${{ env.OUTPUT_DIR }}/${{ env.BINARY_NAME }}_darwin_arm64
