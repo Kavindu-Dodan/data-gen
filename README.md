@@ -1,8 +1,6 @@
 # Data Generator
 
-A simple data generator for easy validations of Logs & Metrics ingestion.
-
-![img.png](resources/architecture.png)
+A simple data generator for easy validations of data ingesting.
 
 ## Quick Start
 
