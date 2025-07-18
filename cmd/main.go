@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -28,29 +27,24 @@ func main() {
 		return
 	}
 
-	configurations, err := conf.NewCfgFrom(b)
+	configurations, err := conf.NewConfig(b)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Config file parsomg error: %s", err.Error()))
 		return
 	}
 
-	marshal, err := json.Marshal(configurations)
-	if err != nil {
-		slog.Error("Error marshalling config", err)
-		return
-	}
-	slog.Info(fmt.Sprintf("Starting with configurations: %v", string(marshal)))
+	slog.Info(fmt.Sprintf("Starting with configurations: %v", configurations.Print()))
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
-	generator, err := makeGenerator(configurations)
+	generator, err := generators.GeneratorFor(configurations)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Error creating generator: %s", err.Error()))
 		return
 	}
 
-	exporter, err := makeExporter(ctx, configurations)
+	exporter, err := exporters.ExporterFor(ctx, configurations)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Error creating exporter: %s", err.Error()))
 		return
@@ -58,7 +52,7 @@ func main() {
 
 	errChan := make(chan error, 2)
 
-	duration, err := time.ParseDuration(configurations.Delay)
+	duration, err := time.ParseDuration(configurations.Input.Delay)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Error parsing delay: %s, please provide value in acceptable string format like `5s`", err.Error()))
 		return
@@ -77,30 +71,4 @@ func main() {
 	}
 
 	slog.Info("Shutting down")
-}
-
-func makeGenerator(cfg *conf.Cfg) (generators.IGen, error) {
-	switch cfg.Type {
-	case conf.TypeLogs:
-		return generators.NewLogGenerator(), nil
-	case conf.TypeMetrics:
-		return generators.NewMetricGenerator(cfg), nil
-	default:
-		return nil, fmt.Errorf("unknown generator type: %s", cfg.Type)
-	}
-}
-
-func makeExporter(ctx context.Context, cfg *conf.Cfg) (exporters.IExport, error) {
-	switch cfg.Output {
-	case conf.OutFile:
-		return exporters.NewFileExporter(cfg.FileLocation), nil
-	case conf.OutFirehose:
-		return exporters.NewFirehoseExporter(ctx, cfg.AWSCfg)
-	case conf.OutCloudwatchLogs:
-		return exporters.NewCloudWatchLogExporter(ctx, cfg.AWSCfg)
-	case conf.OutS3Bucket:
-		return exporters.NewS3BucketExporter(ctx, cfg.AWSCfg)
-	default:
-		return nil, fmt.Errorf("unknown exporter output: %s", cfg.Output)
-	}
 }

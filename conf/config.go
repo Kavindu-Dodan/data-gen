@@ -1,118 +1,96 @@
 package conf
 
 import (
-	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"log/slog"
+	"strings"
 )
 
 const (
-	OutFirehose       = "FIREHOSE"
-	OutFile           = "FILE"
-	OutCloudwatchLogs = "CLOUDWATCH_LOG"
-	OutS3Bucket       = "S3"
-	TypeLogs          = "LOGS"
-	TypeMetrics       = "METRICS"
-
-	defaultBucketPrefix = "logFile-"
-	defaultProfile      = "default"
-	defaultRegion       = "us-east-1"
-	defaultFileLocation = "./out"
-	defaultDelay        = "5s"
+	defaultProfile = "default"
+	defaultRegion  = "us-east-1"
+	defaultDelay   = "5s"
 )
 
-type Cfg struct {
-	Type         string `yaml:"type"`
-	Output       string `yaml:"output"`
-	Delay        string `yaml:"delay"`
-	FileLocation string `yaml:"file_location,omitempty"`
-	AWSCfg       `yaml:"aws,omitempty"`
+type Config struct {
+	Input  InputConfig  `yaml:"input"`
+	Output OutputConfig `yaml:"output"`
+	AWSCfg `yaml:"aws,omitempty"`
+}
+
+func newDefaultConfig() *Config {
+	return &Config{
+		AWSCfg: *newDefaultAWSCfg(),
+		Input:  *newDefaultInputConfig(),
+	}
+}
+
+func (cfg *Config) Print() string {
+	sb := strings.Builder{}
+
+	sb.WriteString(fmt.Sprintf("[ Input - %s \t", cfg.Input.Print()))
+	sb.WriteString(fmt.Sprintf("Output - %s \t", cfg.Output.Print()))
+	sb.WriteString(fmt.Sprintf("AWS - %s ]", cfg.AWSCfg.Print()))
+
+	return strings.TrimSpace(sb.String())
+}
+
+type InputConfig struct {
+	Type  string    `yaml:"type"`
+	Conf  yaml.Node `yaml:"config"`
+	Delay string    `yaml:"delay"`
+}
+
+func newDefaultInputConfig() *InputConfig {
+	return &InputConfig{
+		Delay: defaultDelay,
+	}
+}
+
+func (cfg *InputConfig) Print() string {
+	sb := strings.Builder{}
+
+	sb.WriteString(fmt.Sprintf("Type: %s, ", cfg.Type))
+	sb.WriteString(fmt.Sprintf("Delay: %s", cfg.Delay))
+
+	return sb.String()
+}
+
+type OutputConfig struct {
+	Type string    `yaml:"type"`
+	Conf yaml.Node `yaml:"config"`
+}
+
+func (cfg *OutputConfig) Print() string {
+	return fmt.Sprintf("Type: %s", cfg.Type)
 }
 
 type AWSCfg struct {
-	Profile                 string `yaml:"profile"`
-	Region                  string `yaml:"region"`
-	S3Bucket                string `yaml:"s3Bucket"`
-	BucketPrefix            string `yaml:"bucketPrefix"`
-	BucketPeriodSeconds     int    `yaml:"bucketSeconds"`
-	FirehoseStreamName      string `yaml:"firehoseStreamName"`
-	CloudwatchLogGroup      string `yaml:"cloudwatchLogGroup"`
-	CloudwatchLogStreamName string `yaml:"cloudwatchLogStreamName"`
+	Profile string `yaml:"profile"`
+	Region  string `yaml:"region"`
 }
 
-func NewCfgFrom(from []byte) (*Cfg, error) {
-	// parse
-	var cfg Cfg
-	err := yaml.Unmarshal(from, &cfg)
+func (c *AWSCfg) Print() string {
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf("Profile: %s, ", c.Profile))
+	sb.WriteString(fmt.Sprintf("Region: %s", c.Region))
+
+	return sb.String()
+}
+
+func newDefaultAWSCfg() *AWSCfg {
+	return &AWSCfg{
+		Profile: defaultProfile,
+		Region:  defaultRegion,
+	}
+}
+
+func NewConfig(input []byte) (*Config, error) {
+	cfg := newDefaultConfig()
+	err := yaml.Unmarshal(input, &cfg)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing config: %v", err)
+		return nil, err
 	}
 
-	// validate
-	if cfg.Output == OutFirehose {
-		err := firehoseCfg(&cfg)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if cfg.Output == OutFile {
-		err := fileCfg(&cfg)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if cfg.Output == OutS3Bucket {
-		err := s3Cfg(&cfg)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if cfg.Delay == "" {
-		cfg.Delay = defaultDelay
-	}
-
-	return &cfg, nil
-}
-
-func fileCfg(cfg *Cfg) error {
-	if cfg.FileLocation == "" {
-		cfg.FileLocation = defaultFileLocation
-	}
-
-	return nil
-}
-
-func s3Cfg(cfg *Cfg) error {
-	if cfg.S3Bucket == "" {
-		return errors.New("s3Bucket is required")
-	}
-
-	if cfg.BucketPrefix == "" {
-		slog.Info(fmt.Sprintf("using default bucket prefix '%s' ", defaultBucketPrefix))
-		cfg.BucketPrefix = defaultBucketPrefix
-	}
-
-	return nil
-}
-
-func firehoseCfg(cfg *Cfg) error {
-	if cfg.FirehoseStreamName == "" {
-		return fmt.Errorf("firehose stream name must be non-empty for FIREHOSE output type")
-	}
-
-	if cfg.Region == "" {
-		slog.Info(fmt.Sprintf("empty AWS region provided, setting to default region %s ", defaultRegion))
-		cfg.Region = defaultRegion
-	}
-
-	if cfg.Profile == "" {
-		slog.Info(fmt.Sprintf("empty AWS Profile provided, setting to default region %s ", defaultProfile))
-		cfg.Profile = defaultProfile
-	}
-
-	return nil
+	return cfg, nil
 }
