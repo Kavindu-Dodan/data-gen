@@ -2,13 +2,13 @@ package generators
 
 import (
 	"fmt"
-	"go.elastic.co/ecszap"
-	"go.uber.org/zap/zapcore"
 	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
+	"go.elastic.co/ecszap"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // LogGenerator generate logs in Elastic log format based on ZAP
@@ -18,7 +18,7 @@ type LogGenerator struct {
 	shChan chan struct{}
 }
 
-func NewLogGenerator() *LogGenerator {
+func newLogGenerator() *LogGenerator {
 	stream := make(chan []byte, 1)
 	w := writer{stream}
 

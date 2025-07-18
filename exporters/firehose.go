@@ -2,9 +2,10 @@ package exporters
 
 import (
 	"context"
-	"data-gen/conf"
 	"fmt"
 	"log/slog"
+
+	"data-gen/conf"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/firehose"
@@ -12,26 +13,36 @@ import (
 )
 
 type FirehoseExporter struct {
-	streamName string
-	client     *firehose.Client
-	shChan     chan struct{}
+	cfg    firehoseCfg
+	client *firehose.Client
+	shChan chan struct{}
 }
 
-func NewFirehoseExporter(ctx context.Context, awsConfig conf.AWSCfg) (*FirehoseExporter, error) {
-	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(awsConfig.Profile), config.WithRegion(awsConfig.Region))
+type firehoseCfg struct {
+	StreamName string `yaml:"stream_name"`
+}
+
+func newFirehoseExporter(ctx context.Context, conf *conf.Config) (*FirehoseExporter, error) {
+	var cfg firehoseCfg
+	err := conf.Output.Conf.Decode(&cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(conf.AWSCfg.Profile), config.WithRegion(conf.AWSCfg.Region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default aws config: %w", err)
 	}
 
 	fhClient := firehose.New(firehose.Options{
 		Credentials: loadedAwsConfig.Credentials,
-		Region:      awsConfig.Region,
+		Region:      conf.AWSCfg.Region,
 	})
 
 	return &FirehoseExporter{
-		streamName: awsConfig.FirehoseStreamName,
-		client:     fhClient,
-		shChan:     make(chan struct{}),
+		cfg:    cfg,
+		client: fhClient,
+		shChan: make(chan struct{}),
 	}, nil
 }
 
@@ -41,13 +52,13 @@ func (f *FirehoseExporter) Start(c <-chan []byte, errChan chan error) {
 			select {
 			case d := <-c:
 				input := firehose.PutRecordInput{
-					DeliveryStreamName: &f.streamName,
+					DeliveryStreamName: &f.cfg.StreamName,
 					Record:             &types.Record{Data: d},
 				}
 
 				_, err := f.client.PutRecord(context.Background(), &input)
 				if err != nil {
-					errChan <- fmt.Errorf("unable to write to firehose stream  %s: %w", f.streamName, err)
+					errChan <- fmt.Errorf("unable to write to firehose stream  %s: %w", f.cfg.StreamName, err)
 					return
 				}
 			case <-f.shChan:

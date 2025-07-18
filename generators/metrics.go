@@ -1,7 +1,6 @@
 package generators
 
 import (
-	"data-gen/conf"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -10,13 +9,11 @@ import (
 )
 
 type MetricGenerator struct {
-	region string
 	shChan chan struct{}
 }
 
-func NewMetricGenerator(cfg *conf.Cfg) *MetricGenerator {
+func newMetricGenerator() *MetricGenerator {
 	return &MetricGenerator{
-		region: cfg.Region,
 		shChan: make(chan struct{}),
 	}
 }
@@ -54,7 +51,7 @@ func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {
 	gen := metricStruct{
 		MetricStreamName: "AWSMetrics",
 		AccountId:        "111111111111",
-		Region:           m.region,
+		Region:           "us-east-1",
 		Namespace:        "AWS/EC2",
 		MetricName:       "DiskWriteOps",
 		Dimensions: dimensions{

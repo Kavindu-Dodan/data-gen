@@ -1,41 +1,33 @@
-# Data type to generate. Supports LOGS, METRICS
-type: LOGS
+input:
+  # Input type.
+  # Supports - LOGS, METRICS
+  type: LOGS
+  # Delay between a data point.
+  # Defaults to 5s
+  delay:
+output:
+  # Output type.
+  # Supports - FILE, FIREHOSE, CLOUDWATCH_LOG, S3
+  type: FILE
+  # Output specific configurations matching type
+  config:
+    location:
+    compression:
 
-# Output stream. Supports FILE, FIREHOSE, CLOUDWATCH_LOG, S3
-output: FILE
+    s3Bucket: ""
+    bucketSeconds: 10
+    pathPrefix: ""
 
-## Delay between a data point per processor. Accepts value in acceptable format like `5s` for five seconds or `100ms` for 100 milliseconds
-## Default is 5 seconds
-#delay: 5s
+    stream_name: ""
 
-# Output location for FILE output. Default ./out
-file_location:
+    logGroup: ""
+    logStream: ""
 
-# AWS configurations. Used for any AWS output
+# AWS specific configuration
 aws:
-  # Region. Default us-east-1
-  region: us-east-1
-  # AWS credential profile. Default to default
-  profile: default
-
-
-  # Exporter specific configurations
-
-  # Valid only with output FIREHOSE
-  # Firehose stream name
-  firehoseStreamName: my-stream
-
-  # Valid only with output CLOUDWATCH_LOG
-  # Cloudwatch Log group stream name
-  cloudwatchLogGroup:
-  # Cloudwatch stream name
-  cloudwatchLogStreamName:
-
-
-  # Valid only with output S3
-  # Required - S3 bucket to push data
-  s3Bucket:
-  # Optional - Amount of time between two bucket entries in seconds. Default to 120 seconds
-  bucketSeconds:
-  # optional - bucket prefix to use. Default to 'logFile-'
-  bucketPrefix:
+  # AWS Region
+  # Defaults to us-east-1
+  region:
+  # AWS credential profile.
+  # Defaults to default
+  profile:

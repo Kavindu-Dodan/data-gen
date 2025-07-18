@@ -2,10 +2,11 @@ package exporters
 
 import (
 	"context"
-	"data-gen/conf"
 	"fmt"
 	"log/slog"
 	"time"
+
+	"data-gen/conf"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -14,19 +15,28 @@ import (
 )
 
 type CloudWatchExporter struct {
-	logGroup  string
-	logStream string
-
+	cfg              cwLogCfg
 	cloudwatchClient *cloudwatchlogs.Client
 	shChan           chan struct{}
 }
 
-func NewCloudWatchLogExporter(ctx context.Context, awsConfig conf.AWSCfg) (*CloudWatchExporter, error) {
-	if awsConfig.CloudwatchLogGroup == "" || awsConfig.CloudwatchLogStreamName == "" {
-		return nil, fmt.Errorf("cloudwatch log group and/or stream name must be specified for output type CLOUDWATCH")
+type cwLogCfg struct {
+	LogGroupName  string `yaml:"logGroup"`
+	LogStreamName string `yaml:"logStream"`
+}
+
+func newCloudWatchLogExporter(ctx context.Context, conf *conf.Config) (*CloudWatchExporter, error) {
+	var cfg cwLogCfg
+	err := conf.Output.Conf.Decode(&cfg)
+	if err != nil {
+		return nil, err
 	}
 
-	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(awsConfig.Profile), config.WithRegion(awsConfig.Region))
+	if cfg.LogGroupName == "" || cfg.LogStreamName == "" {
+		return nil, fmt.Errorf("cloudwatch log group and/or stream name must be specified for output type %s", conf.Output.Type)
+	}
+
+	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(conf.AWSCfg.Profile), config.WithRegion(conf.AWSCfg.Region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default aws config: %w", err)
 	}
@@ -34,8 +44,7 @@ func NewCloudWatchLogExporter(ctx context.Context, awsConfig conf.AWSCfg) (*Clou
 	cloudwatchClient := cloudwatchlogs.NewFromConfig(loadedAwsConfig)
 
 	return &CloudWatchExporter{
-		logGroup:         awsConfig.CloudwatchLogGroup,
-		logStream:        awsConfig.CloudwatchLogStreamName,
+		cfg:              cfg,
 		cloudwatchClient: cloudwatchClient,
 		shChan:           make(chan struct{}),
 	}, nil
@@ -47,8 +56,8 @@ func (ce CloudWatchExporter) Start(data <-chan []byte, errChan chan error) {
 			select {
 			case d := <-data:
 				record := cloudwatchlogs.PutLogEventsInput{
-					LogGroupName:  aws.String(ce.logGroup),
-					LogStreamName: aws.String(ce.logStream),
+					LogGroupName:  aws.String(ce.cfg.LogGroupName),
+					LogStreamName: aws.String(ce.cfg.LogStreamName),
 					LogEvents: []types.InputLogEvent{
 						{
 							Message:   aws.String(string(d)),
@@ -59,7 +68,7 @@ func (ce CloudWatchExporter) Start(data <-chan []byte, errChan chan error) {
 
 				_, err := ce.cloudwatchClient.PutLogEvents(context.Background(), &record)
 				if err != nil {
-					errChan <- fmt.Errorf("unable to write to cloudwatch log group  %s: %w", ce.logGroup, err)
+					errChan <- fmt.Errorf("unable to write to cloudwatch log group  %s: %w", ce.cfg.LogGroupName, err)
 					return
 				}
 			case <-ce.shChan:

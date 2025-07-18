@@ -1,6 +1,6 @@
 # Data Generator
 
-A simple data generator for easy validations of data ingesting.
+A simple data generator with export capability to various destinations
 
 ## Quick Start
 
@@ -9,65 +9,104 @@ Require Go version 1.24+
 - Clone the repository
 - Copy `config.sample.yaml` and edit as needed.
 - Start the data generator with config file as the only parameter
-  `go run main.go --configFile ./config.yaml`
+  `go run cmd/main.go --configFile ./config.yaml`
 
 ## Configurations
 
-Check `config.sample.yaml` as a reference configuration.
+Given below are the supported configuration options.
+Check `config.sample.yaml` for reference.
 
-### Sources
+### Input configurations
 
-#### Logs
+Given below are supported input types,
 
-ECS (Elastic Common Schema) formated logs based on zap.
-Check [ecs-logging-go-zap](https://github.com/elastic/ecs-logging-go-zap) for adoption
+- LOGS : ECS (Elastic Common Schema) formated logs based on zap.
+- METRICS: Generate metrics similar to a CloudWatch metrics entry
 
-#### Metrics
+Other input configuration,
 
-Generate metrics similar to a CloudWatch metrics entry. Limited support and tobe improved
+- delay : Delay between a data point. Accepts value in acceptable format like 5s (5 Seconds), 10ms (10 milliseconds)
 
-### Exporters
+Example:
 
-> [!IMPORTANT]  
-> AWS specific exporters require aws.profile to configure with a valid credential profile name.
-> And make sure you have sufficient permissions to use the exporter with these credentials.
+```yaml
+input:
+  type: LOGS # Input type LOGS
+  delay: 2s  # 2 Seconds between each data point
+```
 
-#### File
+### Output configurations
 
-Generates a file with new line as data point delimiter.
+Given below are supported output types,
 
-Available options,
+- FILE: Output to a file
+- FIREHOSE: Output to a Firehose stream
+- CLOUDWATCH_LOG: Output to a CloudWatch log group
+- S3: Output to a S3 bucket
 
-- `file_location` : Optional file location to write the output to. Default to `./out`
+Sections below provide output specific configurations
 
+#### FILE
+
+- location : Output file location. Default to `./out`
+
+Example:
+
+```yaml
+output:
+  type: FILE
+  config:
+    location: "./data"
+```
 
 #### S3
 
-Write generated data to a S3 bucket.
+- s3Bucket : S3 bucket name (required)
+- bucketSeconds: Period between two bucket entries. Default to 120 Seconds
+- pathPrefix: Optional prefix for the bucket entry. Default to `logFile-`
 
-Available options,
+Example:
 
-- `s3Bucket` : Bucket name (required)
-- `bucketSeconds`: Period between two bucket entries. Optional and default to 120seconds
-- `bucketPrefix`: Optional prefix for the entry. Default to `logFile-`
+```yaml
+output:
+  type: S3
+  config:
+    s3Bucket: "testing-bucket"
+    bucketSeconds: 10
+    pathPrefix: "datagen"
+```
 
 #### FIREHOSE
 
-Push data to an AWS firehose data stream. 
+- stream_name: Firehose stream name (required)
 
-Available options,
+Example:
 
-- `firehoseStreamName` : firehose stream name (required)
+```yaml
+output:
+  type: FIREHOSE
+  config:
+    stream_name: "my-firehose-stream"
+```
 
 #### CLOUDWATCH_LOG
 
-Push data to AWS CloudWatch log group or stream name.
+- logGroup : Cloudwatch log group name
+- logStream : Log group stream name
 
-Available options,
+Example:
 
-- `cloudwatchLogGroup` : Cloudwatch log group name
-- `cloudwatchLogStreamName` : Define a specific log stream name
+```yaml
+output:
+  type: CLOUDWATCH_LOG
+  config:
+    logGroup: "MyGroup"
+    logStream: "data"
+```
 
-> [!IMPORTANT]  
-> One of these options must be set to use the exporter
+### CSP configurations
 
+Currently, this project only support AWS CSP. Given below are available configurations,
+
+- region: Region to use by exporters. Default to us-east-1
+- profile: Credential profile to use by exporters. Default to default
