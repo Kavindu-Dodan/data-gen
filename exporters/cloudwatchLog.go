@@ -50,7 +50,9 @@ func newCloudWatchLogExporter(ctx context.Context, conf *conf.Config) (*CloudWat
 	}, nil
 }
 
-func (ce CloudWatchExporter) Start(data <-chan []byte, errChan chan error) {
+func (ce CloudWatchExporter) Start(data <-chan []byte) <-chan error {
+	errChan := make(chan error)
+
 	go func() {
 		for {
 			select {
@@ -79,6 +81,7 @@ func (ce CloudWatchExporter) Start(data <-chan []byte, errChan chan error) {
 		}
 	}()
 
+	return errChan
 }
 
 func (ce CloudWatchExporter) Stop() {

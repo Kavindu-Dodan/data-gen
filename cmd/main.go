@@ -50,25 +50,25 @@ func main() {
 		return
 	}
 
-	errChan := make(chan error, 2)
-
 	duration, err := time.ParseDuration(configurations.Input.Delay)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Error parsing delay: %s, please provide value in acceptable string format like `5s`", err.Error()))
 		return
 	}
 
-	outChan := generator.Start(duration, errChan)
-	exporter.Start(outChan, errChan)
+	outChan, genError := generator.Start(duration)
+	expErr := exporter.Start(outChan)
 
 	select {
 	case <-sigs:
-		generator.Stop()
-		exporter.Stop()
-		<-time.After(time.Second)
-	case err := <-errChan:
-		slog.Error(fmt.Sprintf("Error occured: %s", err.Error()))
+	case er := <-genError:
+		slog.Error(fmt.Sprintf("Error from generator: %s", er.Error()))
+	case er := <-expErr:
+		slog.Error(fmt.Sprintf("Error from exporter: %s", er.Error()))
 	}
 
 	slog.Info("Shutting down")
+	generator.Stop()
+	exporter.Stop()
+	<-time.After(time.Second)
 }

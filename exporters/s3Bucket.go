@@ -56,7 +56,9 @@ func newS3BucketExporter(ctx context.Context, conf *conf.Config) (*S3BucketExpor
 	}, nil
 }
 
-func (s *S3BucketExporter) Start(c <-chan []byte, errChan chan error) {
+func (s *S3BucketExporter) Start(c <-chan []byte) <-chan error {
+	errChan := make(chan error)
+
 	go func() {
 		lastStart := time.Now()
 		sb := strings.Builder{}
@@ -92,6 +94,8 @@ func (s *S3BucketExporter) Start(c <-chan []byte, errChan chan error) {
 			}
 		}
 	}()
+
+	return errChan
 }
 
 func (s *S3BucketExporter) Stop() {

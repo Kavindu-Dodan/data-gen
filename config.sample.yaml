@@ -1,6 +1,6 @@
 input:
   # Input type.
-  # Supports - LOGS, METRICS
+  # Supports - LOGS, METRICS, ALB
   type: LOGS
   # Delay between a data point.
   # Defaults to 5s
