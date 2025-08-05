@@ -38,14 +38,16 @@ func newFileExporter(config *conf.Config) (*FileExporter, error) {
 	}, nil
 }
 
-func (f FileExporter) Start(c <-chan []byte, errChan chan error) {
-	file, err := os.OpenFile(f.cfg.Location, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		errChan <- fmt.Errorf("unable to open file %s: %w", f.cfg.Location, err)
-		return
-	}
+func (f FileExporter) Start(c <-chan []byte) <-chan error {
+	errChan := make(chan error)
 
 	go func() {
+		file, err := os.OpenFile(f.cfg.Location, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
+		if err != nil {
+			errChan <- fmt.Errorf("unable to open file %s: %w", f.cfg.Location, err)
+			return
+		}
+
 		for {
 			select {
 			case d := <-c:
@@ -60,6 +62,8 @@ func (f FileExporter) Start(c <-chan []byte, errChan chan error) {
 			}
 		}
 	}()
+
+	return errChan
 }
 
 func (f FileExporter) Stop() {

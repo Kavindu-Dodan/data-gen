@@ -2,8 +2,6 @@ package generators
 
 import (
 	"encoding/json"
-	"fmt"
-	"log/slog"
 	"math/rand"
 	"time"
 )
@@ -12,33 +10,14 @@ type MetricGenerator struct {
 	shChan chan struct{}
 }
 
-func newMetricGenerator() *MetricGenerator {
+func NewMetricGenerator() *MetricGenerator {
 	return &MetricGenerator{
 		shChan: make(chan struct{}),
 	}
 }
 
-func (m *MetricGenerator) Start(delay time.Duration, errChan chan<- error) <-chan []byte {
-	c := make(chan []byte, 2)
-
-	go func() {
-		for {
-			select {
-			case <-time.After(delay):
-				entry, err := m.makeNewMetricsEntry()
-				if err != nil {
-					errChan <- fmt.Errorf("error generating metrics: %s", err)
-					return
-				}
-				c <- entry
-			case _ = <-m.shChan:
-				slog.Info("shutting down log generator")
-				return
-			}
-		}
-	}()
-
-	return c
+func (m *MetricGenerator) Get() ([]byte, error) {
+	return m.makeNewMetricsEntry()
 }
 
 func (m *MetricGenerator) Stop() {

@@ -46,7 +46,9 @@ func newFirehoseExporter(ctx context.Context, conf *conf.Config) (*FirehoseExpor
 	}, nil
 }
 
-func (f *FirehoseExporter) Start(c <-chan []byte, errChan chan error) {
+func (f *FirehoseExporter) Start(c <-chan []byte) <-chan error {
+	errChan := make(chan error)
+
 	go func() {
 		for {
 			select {
@@ -67,6 +69,8 @@ func (f *FirehoseExporter) Start(c <-chan []byte, errChan chan error) {
 			}
 		}
 	}()
+
+	return errChan
 }
 
 func (f *FirehoseExporter) Stop() {

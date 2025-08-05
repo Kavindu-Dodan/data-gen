@@ -7,7 +7,7 @@ import (
 )
 
 type Export interface {
-	Start(c <-chan []byte, errChan chan error)
+	Start(c <-chan []byte) <-chan error
 	Stop()
 }
 
