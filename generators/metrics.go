@@ -20,8 +20,8 @@ func (m *MetricGenerator) Get() ([]byte, error) {
 	return m.makeNewMetricsEntry()
 }
 
-func (m *MetricGenerator) Stop() {
-	close(m.shChan)
+func (m *MetricGenerator) ResetBatch() {
+	// no-op
 }
 
 func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {

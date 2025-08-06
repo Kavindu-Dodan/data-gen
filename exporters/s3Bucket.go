@@ -1,11 +1,13 @@
 package exporters
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"data-gen/conf"
 	"fmt"
+	"io"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -21,15 +23,14 @@ type S3BucketExporter struct {
 }
 
 type s3Config struct {
-	Bucket        string `yaml:"s3Bucket"`
-	BucketSeconds int64  `yaml:"bucketSeconds"`
-	PathPrefix    string `yaml:"pathPrefix"`
+	Bucket      string `yaml:"s3Bucket"`
+	PathPrefix  string `yaml:"pathPrefix"`
+	Compression string `yaml:"compression"`
 }
 
 func newDefaultS3Config() s3Config {
 	return s3Config{
-		BucketSeconds: 120,
-		PathPrefix:    defaultBucketPrefix,
+		PathPrefix: defaultBucketPrefix,
 	}
 }
 
@@ -60,33 +61,36 @@ func (s *S3BucketExporter) Start(c <-chan []byte) <-chan error {
 	errChan := make(chan error)
 
 	go func() {
-		lastStart := time.Now()
-		sb := strings.Builder{}
-		bucketingPeriod := time.Duration(s.cfg.BucketSeconds) * time.Second
 		for {
 			select {
-			case d := <-c:
-				sb.Write(d)
+			case data := <-c:
+				key := fmt.Sprintf("%s%s", s.cfg.PathPrefix, time.Now().Format("2006-01-02_15-04-05"))
+				var content io.Reader
 
-				if time.Since(lastStart) > bucketingPeriod {
-					// upload to S3
-					key := fmt.Sprintf("%s%s", s.cfg.PathPrefix, time.Now().Format("2006-01-02_15-04-05"))
-
-					input := awss3.PutObjectInput{
-						Bucket: &s.cfg.Bucket,
-						Key:    &key,
-						Body:   strings.NewReader(sb.String()),
-					}
-
-					_, err := s.client.PutObject(context.Background(), &input)
+				// check and compress
+				if s.cfg.Compression == "gzip" {
+					key = key + ".gz"
+					compressString, err := gzipCompressString(data)
 					if err != nil {
-						errChan <- fmt.Errorf("unable to upload to S3 bucket  %s: %w", s.cfg.Bucket, err)
+						errChan <- fmt.Errorf("failed to compress s3 object: %w", err)
 						return
 					}
 
-					// reset all
-					lastStart = time.Now()
-					sb.Reset()
+					content = bytes.NewReader(compressString)
+				} else {
+					content = bytes.NewReader(data)
+				}
+
+				input := awss3.PutObjectInput{
+					Bucket: &s.cfg.Bucket,
+					Key:    &key,
+					Body:   content,
+				}
+
+				_, err := s.client.PutObject(context.Background(), &input)
+				if err != nil {
+					errChan <- fmt.Errorf("unable to upload to S3 bucket  %s: %w", s.cfg.Bucket, err)
+					return
 				}
 			case <-s.shChan:
 				slog.Info("shutting down S3 exporter")
@@ -100,4 +104,21 @@ func (s *S3BucketExporter) Start(c <-chan []byte) <-chan error {
 
 func (s *S3BucketExporter) Stop() {
 	close(s.shChan)
+}
+
+func gzipCompressString(input []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+
+	_, err := gz.Write(input)
+	if err != nil {
+		return nil, err
+	}
+
+	err = gz.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }

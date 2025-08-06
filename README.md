@@ -28,6 +28,7 @@ Given below are supported input types,
 Other input configuration,
 
 - delay : Delay between a data point. Accepts value in acceptable format like 5s (5 Seconds), 10ms (10 milliseconds)
+- batching: Set whether to batch input generated data. Accepts a time value similar to delay. Default is set to 0 (no batching)
 
 Example:
 

@@ -36,6 +36,10 @@ func (l LogGenerator) Get() ([]byte, error) {
 	return l.writer.data, nil
 }
 
+func (l LogGenerator) ResetBatch() {
+	// no-op
+}
+
 // writer helps to extract logs and emit through com chan
 type writer struct {
 	data []byte
