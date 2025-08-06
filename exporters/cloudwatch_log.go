@@ -50,7 +50,7 @@ func newCloudWatchLogExporter(ctx context.Context, conf *conf.Config) (*CloudWat
 	}, nil
 }
 
-func (ce CloudWatchExporter) Start(data <-chan []byte) <-chan error {
+func (ce CloudWatchExporter) Start(data <-chan *[]byte) <-chan error {
 	errChan := make(chan error)
 
 	go func() {
@@ -62,7 +62,7 @@ func (ce CloudWatchExporter) Start(data <-chan []byte) <-chan error {
 					LogStreamName: aws.String(ce.cfg.LogStreamName),
 					LogEvents: []types.InputLogEvent{
 						{
-							Message:   aws.String(string(d)),
+							Message:   aws.String(string(*d)),
 							Timestamp: aws.Int64(time.Now().UnixMilli()),
 						},
 					},

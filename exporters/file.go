@@ -38,7 +38,7 @@ func newFileExporter(config *conf.Config) (*FileExporter, error) {
 	}, nil
 }
 
-func (f FileExporter) Start(c <-chan []byte) <-chan error {
+func (f FileExporter) Start(c <-chan *[]byte) <-chan error {
 	errChan := make(chan error)
 
 	go func() {
@@ -51,7 +51,7 @@ func (f FileExporter) Start(c <-chan []byte) <-chan error {
 		for {
 			select {
 			case d := <-c:
-				_, err := file.Write(d)
+				_, err := file.Write(*d)
 				if err != nil {
 					errChan <- fmt.Errorf("unable to write to file %s: %w", f.cfg.Location, err)
 					return

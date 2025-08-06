@@ -46,7 +46,7 @@ func newFirehoseExporter(ctx context.Context, conf *conf.Config) (*FirehoseExpor
 	}, nil
 }
 
-func (f *FirehoseExporter) Start(c <-chan []byte) <-chan error {
+func (f *FirehoseExporter) Start(c <-chan *[]byte) <-chan error {
 	errChan := make(chan error)
 
 	go func() {
@@ -55,7 +55,7 @@ func (f *FirehoseExporter) Start(c <-chan []byte) <-chan error {
 			case d := <-c:
 				input := firehose.PutRecordInput{
 					DeliveryStreamName: &f.cfg.StreamName,
-					Record:             &types.Record{Data: d},
+					Record:             &types.Record{Data: *d},
 				}
 
 				_, err := f.client.PutRecord(context.Background(), &input)
