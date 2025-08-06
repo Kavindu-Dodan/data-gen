@@ -2,15 +2,9 @@ package generators
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
 )
 
 type ALBGen struct {
-}
-
-func NewALBGen() *ALBGen {
-	return &ALBGen{}
 }
 
 func (a *ALBGen) Get() ([]byte, error) {
@@ -89,28 +83,4 @@ func buildALBLogLine(input albCustomizer) string {
 	)
 
 	return logLine
-}
-
-// randomizers
-
-func iso8601Now() string {
-	return time.Now().UTC().Format("2006-01-02T15:04:05.000000Z")
-}
-
-func randomALBType() string {
-	types := []string{"http", "https", "h2"}
-	return types[rand.Intn(len(types))]
-}
-
-func randomIP() string {
-	return fmt.Sprintf("%d.%d.%d.%d",
-		rand.Intn(256),
-		rand.Intn(256),
-		rand.Intn(256),
-		rand.Intn(256),
-	)
-}
-
-func randomPort() int {
-	return rand.Intn(65535-1024) + 1024
 }

@@ -12,6 +12,7 @@ const (
 	logs    = "LOGS"
 	metrics = "METRICS"
 	alb     = "ALB"
+	vpc     = "VPC"
 )
 
 type input interface {
@@ -25,7 +26,9 @@ func GeneratorFor(config *conf.Config) (*Generator, error) {
 	case metrics:
 		return newGenerator(NewMetricGenerator()), nil
 	case alb:
-		return newGenerator(NewALBGen()), nil
+		return newGenerator(&ALBGen{}), nil
+	case vpc:
+		return newGenerator(&VPCGen{}), nil
 	}
 
 	return nil, fmt.Errorf("unknown generator type: %s", config.Input.Type)

@@ -20,9 +20,10 @@ Check `config.sample.yaml` for reference.
 
 Given below are supported input types,
 
-- LOGS : ECS (Elastic Common Schema) formated logs based on zap.
+- LOGS : ECS (Elastic Common Schema) formated logs based on zap
 - METRICS: Generate metrics similar to a CloudWatch metrics entry
 - ALB : Generate AWS ALB formatted log with some random content
+- VPC: Generate AWS VPC formatted logs with randomized content
 
 Other input configuration,
 

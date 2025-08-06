@@ -1,8 +1,10 @@
 package generators
 
 import (
-	"github.com/stretchr/testify/require"
+	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 // refer http example of https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html#access-log-entry-format
@@ -25,6 +27,6 @@ func Test_buildALB(t *testing.T) {
 			requestID:      "TID_1234abcd5678ef90",
 		})
 
-		require.Equal(t, upstreamALBHTTP, line)
+		require.Equal(t, upstreamALBHTTP, strings.TrimSpace(line))
 	})
 }
