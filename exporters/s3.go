@@ -57,34 +57,40 @@ func newS3BucketExporter(ctx context.Context, conf *conf.Config) (*S3BucketExpor
 	}, nil
 }
 
-func (s *S3BucketExporter) Start(c <-chan []byte) <-chan error {
+func (s *S3BucketExporter) Start(c <-chan *[]byte) <-chan error {
 	errChan := make(chan error)
 
 	go func() {
+		var content io.Reader
+		var encoding string
+		contentType := "application/text"
+
 		for {
 			select {
 			case data := <-c:
 				key := fmt.Sprintf("%s%s", s.cfg.PathPrefix, time.Now().Format("2006-01-02_15-04-05"))
-				var content io.Reader
 
 				// check and compress
 				if s.cfg.Compression == "gzip" {
 					key = key + ".gz"
-					compressString, err := gzipCompressString(data)
+					compressString, err := gzipCompress(*data)
 					if err != nil {
 						errChan <- fmt.Errorf("failed to compress s3 object: %w", err)
 						return
 					}
 
 					content = bytes.NewReader(compressString)
+					encoding = "gzip"
 				} else {
-					content = bytes.NewReader(data)
+					content = bytes.NewReader(*data)
 				}
 
 				input := awss3.PutObjectInput{
-					Bucket: &s.cfg.Bucket,
-					Key:    &key,
-					Body:   content,
+					Bucket:          &s.cfg.Bucket,
+					Key:             &key,
+					Body:            content,
+					ContentEncoding: &encoding,
+					ContentType:     &contentType,
 				}
 
 				_, err := s.client.PutObject(context.Background(), &input)
@@ -106,7 +112,7 @@ func (s *S3BucketExporter) Stop() {
 	close(s.shChan)
 }
 
-func gzipCompressString(input []byte) ([]byte, error) {
+func gzipCompress(input []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
 

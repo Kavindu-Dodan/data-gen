@@ -17,7 +17,7 @@ func unixSeconds() int64 {
 }
 
 func randomALBType() string {
-	types := []string{"http", "https", "h2"}
+	types := []string{"http", "https"}
 	return types[rand.Intn(len(types))]
 }
 
@@ -26,17 +26,19 @@ func randomVPCAction() string {
 	return types[rand.Intn(len(types))]
 }
 
+// randomIP from 72.16.101.0/24
 func randomIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d",
-		rand.Intn(256),
-		rand.Intn(256),
-		rand.Intn(256),
+		172,
+		16,
+		101,
 		rand.Intn(256),
 	)
 }
 
+// randomPort in range 58080 to 62000
 func randomPort() int {
-	return rand.Intn(65535-1024) + 1024
+	return rand.Intn(62000-58080) + 58080
 }
 
 func randomAWSAccountID() string {

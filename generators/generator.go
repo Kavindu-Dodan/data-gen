@@ -50,8 +50,8 @@ func newGenerator(cfg conf.InputConfig, in input) *Generator {
 	}
 }
 
-func (g *Generator) Start(delay time.Duration) (<-chan []byte, <-chan error) {
-	dChan := make(chan []byte)
+func (g *Generator) Start(delay time.Duration) (<-chan *[]byte, <-chan error) {
+	dChan := make(chan *[]byte)
 	errChan := make(chan error)
 
 	go func() {
@@ -72,14 +72,15 @@ func (g *Generator) Start(delay time.Duration) (<-chan []byte, <-chan error) {
 					errChan <- err
 				}
 
+				buf.Write(got)
+
 				// check for batching
 				if time.Since(lastBatch) > duration {
 					lastBatch = time.Now()
-					dChan <- buf.Bytes()
+					b := buf.Bytes()
+					dChan <- &b
 					buf.Reset()
 					g.input.ResetBatch()
-				} else {
-					buf.Write(got)
 				}
 			case <-g.shChan:
 				slog.Info("Shutting down Generator")
