@@ -5,10 +5,24 @@ import (
 	"math/rand/v2"
 )
 
+const header = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
+
 type VPCGen struct {
+	init bool
 }
 
-func (V VPCGen) Get() ([]byte, error) {
+func newVPCGen() *VPCGen {
+	return &VPCGen{
+		init: true,
+	}
+}
+
+func (v *VPCGen) Get() ([]byte, error) {
+	if v.init {
+		v.init = false
+		return []byte(fmt.Sprintf("%s\n", header)), nil
+	}
+
 	customizer := vpcCustomizer{
 		Version:     2,
 		AccountID:   randomAWSAccountID(),
@@ -27,6 +41,10 @@ func (V VPCGen) Get() ([]byte, error) {
 	}
 
 	return []byte(buildVPCLogLine(customizer)), nil
+}
+
+func (v *VPCGen) ResetBatch() {
+	v.init = true
 }
 
 type vpcCustomizer struct {

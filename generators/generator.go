@@ -1,6 +1,7 @@
 package generators
 
 import (
+	"bytes"
 	"fmt"
 	"log/slog"
 	"time"
@@ -17,31 +18,34 @@ const (
 
 type input interface {
 	Get() ([]byte, error)
+	ResetBatch()
 }
 
 func GeneratorFor(config *conf.Config) (*Generator, error) {
 	switch config.Input.Type {
 	case logs:
-		return newGenerator(NewLogGenerator()), nil
+		return newGenerator(config.Input, NewLogGenerator()), nil
 	case metrics:
-		return newGenerator(NewMetricGenerator()), nil
+		return newGenerator(config.Input, NewMetricGenerator()), nil
 	case alb:
-		return newGenerator(&ALBGen{}), nil
+		return newGenerator(config.Input, &ALBGen{}), nil
 	case vpc:
-		return newGenerator(&VPCGen{}), nil
+		return newGenerator(config.Input, newVPCGen()), nil
 	}
 
 	return nil, fmt.Errorf("unknown generator type: %s", config.Input.Type)
 }
 
 type Generator struct {
-	in     input
+	config conf.InputConfig
+	input  input
 	shChan chan struct{}
 }
 
-func newGenerator(in input) *Generator {
+func newGenerator(cfg conf.InputConfig, in input) *Generator {
 	return &Generator{
-		in:     in,
+		config: cfg,
+		input:  in,
 		shChan: make(chan struct{}),
 	}
 }
@@ -51,14 +55,32 @@ func (g *Generator) Start(delay time.Duration) (<-chan []byte, <-chan error) {
 	errChan := make(chan error)
 
 	go func() {
+		duration, err := time.ParseDuration(g.config.Batching)
+		if err != nil {
+			errChan <- fmt.Errorf("failed to parse batching duration: %s", err)
+			return
+		}
+
+		var buf bytes.Buffer
+		lastBatch := time.Now()
+
 		for {
 			select {
 			case <-time.After(delay):
-				get, err := g.in.Get()
+				got, err := g.input.Get()
 				if err != nil {
 					errChan <- err
 				}
-				dChan <- get
+
+				// check for batching
+				if time.Since(lastBatch) > duration {
+					lastBatch = time.Now()
+					dChan <- buf.Bytes()
+					buf.Reset()
+					g.input.ResetBatch()
+				} else {
+					buf.Write(got)
+				}
 			case <-g.shChan:
 				slog.Info("Shutting down Generator")
 				return

@@ -5,6 +5,9 @@ input:
   # Delay between a data point.
   # Defaults to 5s
   delay:
+  # Delay between data batches.
+  # Default to 0 (no batching)
+  batching:
 output:
   # Output type.
   # Supports - FILE, FIREHOSE, CLOUDWATCH_LOG, S3
@@ -15,7 +18,6 @@ output:
     compression:
 
     s3Bucket: ""
-    bucketSeconds: 10
     pathPrefix: ""
 
     stream_name: ""

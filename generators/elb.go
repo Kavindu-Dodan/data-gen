@@ -26,6 +26,10 @@ func (a *ALBGen) Get() ([]byte, error) {
 	return []byte(buildALBLogLine(customizer)), nil
 }
 
+func (a *ALBGen) ResetBatch() {
+	// no-op
+}
+
 // helpers
 type albCustomizer struct {
 	logType        string

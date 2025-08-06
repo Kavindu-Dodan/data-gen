@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	defaultProfile = "default"
-	defaultRegion  = "us-east-1"
-	defaultDelay   = "5s"
+	defaultProfile  = "default"
+	defaultRegion   = "us-east-1"
+	defaultDelay    = "5s"
+	defaultBatching = "0s"
 )
 
 type Config struct {
@@ -36,14 +37,16 @@ func (cfg *Config) Print() string {
 }
 
 type InputConfig struct {
-	Type  string    `yaml:"type"`
-	Conf  yaml.Node `yaml:"config"`
-	Delay string    `yaml:"delay"`
+	Type     string    `yaml:"type"`
+	Conf     yaml.Node `yaml:"config"`
+	Delay    string    `yaml:"delay"`
+	Batching string    `yaml:"batching"`
 }
 
 func newDefaultInputConfig() *InputConfig {
 	return &InputConfig{
-		Delay: defaultDelay,
+		Delay:    defaultDelay,
+		Batching: defaultBatching,
 	}
 }
 
