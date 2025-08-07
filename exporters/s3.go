@@ -63,7 +63,6 @@ func (s *S3BucketExporter) Start(c <-chan *[]byte) <-chan error {
 	go func() {
 		var content io.Reader
 		var encoding string
-		contentType := "application/text"
 
 		for {
 			select {
@@ -90,7 +89,6 @@ func (s *S3BucketExporter) Start(c <-chan *[]byte) <-chan error {
 					Key:             &key,
 					Body:            content,
 					ContentEncoding: &encoding,
-					ContentType:     &contentType,
 				}
 
 				_, err := s.client.PutObject(context.Background(), &input)
