@@ -69,7 +69,7 @@ const (
 
 func buildALBLogLine(input albCustomizer) string {
 	logLine := fmt.Sprintf(
-		"%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n ",
+		"%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
 		input.logType, input.timestamp, input.elbID,
 		input.clientIPPort, input.targetIPPort,
 		requestProcessingTimeMs, targetProcessingTimeMs, responseProcessingTimeMs,
