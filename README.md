@@ -30,10 +30,10 @@ Given below are supported input types and their related environment variable ove
 
 Note about input `type`,
 
-- LOGS : ECS (Elastic Common Schema) formatted logs based on zap
-- METRICS: Generate metrics similar to a CloudWatch metrics entry
-- ALB : Generate AWS ALB formatted log with some random content
-- VPC: Generate AWS VPC formatted logs with randomized content
+- `LOGS` : ECS (Elastic Common Schema) formatted logs based on zap
+- `METRICS`: Generate metrics similar to a CloudWatch metrics entry
+- `ALB` : Generate AWS ALB formatted log with some random content
+- `VPC`: Generate AWS VPC formatted logs with randomized content
 
 Example:
 
@@ -141,4 +141,56 @@ Example:
 aws:
   region: "us-east-1"
   profile: "default"
+```
+
+## Example Configurations
+
+### 1. Continuous Log Generation to a S3 bucket
+
+Generate ECS-formatted logs every 2s, batch them in 10 seconds and forward to S3 buc
+
+```yaml
+input:
+  type: LOGS
+  delay: 2s
+  batching: 10s
+output:
+  type: s3
+  config:
+    s3_bucket: "testing-bucket"
+```
+
+### 2. Continuous Log Generation with batching to a S3 bucket
+
+Generate ALB logs. No delay between data points (continuous data generating). 
+Limit batching to 10 seconds and max batch size is set to 10MB. This translates to ~1 MB/second data load.
+S3 files will be in `gzip` format.
+
+```yaml
+input:
+  type: ALB
+  delay: 0s
+  batching: 10s
+  max_batch_size: 10000000
+output:
+  type: s3
+  config:
+    s3_bucket: "testing-bucket"
+    compression: "gzip"
+```
+
+### 3. Limit data points
+
+Generate VPC logs and limit to 2 data points. Then upload it to S3 in `gzip` format.
+
+```yaml
+input:
+  type: VPC
+  delay: 1s
+  max_data_points: 2
+output:
+  type: s3
+  config:
+    s3_bucket: "testing-bucket"
+    compression: "gzip"
 ```

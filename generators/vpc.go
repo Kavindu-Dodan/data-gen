@@ -18,9 +18,11 @@ func newVPCGen() *VPCGen {
 }
 
 func (v *VPCGen) Get() ([]byte, error) {
+	var data []byte
+
 	if v.init {
 		v.init = false
-		return []byte(fmt.Sprintf("%s\n", header)), nil
+		data = []byte(fmt.Sprintf("%s\n", header))
 	}
 
 	customizer := vpcCustomizer{
@@ -40,7 +42,8 @@ func (v *VPCGen) Get() ([]byte, error) {
 		LogStatus:   "ok",
 	}
 
-	return []byte(buildVPCLogLine(customizer)), nil
+	data = append(data, []byte(buildVPCLogLine(customizer))...)
+	return data, nil
 }
 
 func (v *VPCGen) ResetBatch() {
