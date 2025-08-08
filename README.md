@@ -147,7 +147,7 @@ aws:
 
 ### 1. Continuous Log Generation to a S3 bucket
 
-Generate ECS-formatted logs every 2s, batch them in 10 seconds and forward to S3 buc
+Generate ECS-formatted logs every 2s, batch them in 10 seconds and forward to S3 bucet
 
 ```yaml
 input:
