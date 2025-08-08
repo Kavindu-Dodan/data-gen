@@ -1,35 +1,38 @@
+# config.yaml - full example for Data Generator
+
 input:
-  # Input type.
-  # Supports - LOGS, METRICS, ALB, VPC
-  type: LOGS
-  # Delay between a data point.
-  # Defaults to 5s
-  delay:
-  # Delay between data batches.
-  # Default to 0 (no batching)
-  batching:
+  type: LOGS              # Input type: LOGS, METRICS, ALB, or VPC
+  delay: 500ms            # Delay between each data point (e.g., 500ms)
+  batching: 10s           # Emit generated data batched within 10 seconds
+  max_batch_size: 10000   # Max batch size in bytes (e.g., 10,000 bytes)
+  max_data_points: 10000  # Max data points to emit after which program exits (e.g., 10000 data points)
+
 output:
-  # Output type.
-  # Supports - FILE, FIREHOSE, CLOUDWATCH_LOG, S3
-  type: FILE
-  # Output specific configurations matching type
-  config:
-    location:
-    compression:
+# Uncomment one output type and configure accordingly
 
-    s3Bucket: ""
-    pathPrefix: ""
+# FILE output example
+# type: FILE
+# config:
+#   location: "./data"           # Output file location, default "./out" with numeric suffixes for batching
 
-    stream_name: ""
+# S3 output example
+# type: S3
+# config:
+#   s3_bucket: "testing-bucket" # S3 bucket name (required)
+#   compression: gzip           # Compression format; supports gzip
+#   path_prefix: "logFile-"     # Optional prefix for bucket entries; defaults to "logFile-"
 
-    logGroup: ""
-    logStream: ""
+# FIREHOSE output example
+# type: FIREHOSE
+# config:
+#   stream_name: "my-firehose-stream"  # Firehose stream name (required)
 
-# AWS specific configuration
+# CLOUDWATCH_LOG output example
+# type: CLOUDWATCH_LOG
+# config:
+#   log_group: "MyGroup"          # CloudWatch log group name
+#   log_stream: "data"            # CloudWatch log stream name
+
 aws:
-  # AWS Region
-  # Defaults to us-east-1
-  region:
-  # AWS credential profile.
-  # Defaults to default
-  profile:
+  region: "us-east-1"    # AWS region to use by exporters; default "us-east-1"
+  profile: "default"     # AWS credential profile to use; default "default"

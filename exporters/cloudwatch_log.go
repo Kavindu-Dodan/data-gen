@@ -3,7 +3,7 @@ package exporters
 import (
 	"context"
 	"fmt"
-	"log/slog"
+	"os"
 	"time"
 
 	"data-gen/conf"
@@ -21,22 +21,30 @@ type CloudWatchExporter struct {
 }
 
 type cwLogCfg struct {
-	LogGroupName  string `yaml:"logGroup"`
-	LogStreamName string `yaml:"logStream"`
+	LogGroupName  string `yaml:"log_group"`
+	LogStreamName string `yaml:"log_stream"`
 }
 
-func newCloudWatchLogExporter(ctx context.Context, conf *conf.Config) (*CloudWatchExporter, error) {
+func newCloudWatchLogExporter(ctx context.Context, c *conf.Config) (*CloudWatchExporter, error) {
 	var cfg cwLogCfg
-	err := conf.Output.Conf.Decode(&cfg)
+	err := c.Output.Conf.Decode(&cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	if cfg.LogGroupName == "" || cfg.LogStreamName == "" {
-		return nil, fmt.Errorf("cloudwatch log group and/or stream name must be specified for output type %s", conf.Output.Type)
+	// load env variable overrides if any
+	if v := os.Getenv(conf.EnvOutLogGroup); v != "" {
+		cfg.LogGroupName = v
+	}
+	if v := os.Getenv(conf.EnvOutLogStream); v != "" {
+		cfg.LogStreamName = v
 	}
 
-	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(conf.AWSCfg.Profile), config.WithRegion(conf.AWSCfg.Region))
+	if cfg.LogGroupName == "" || cfg.LogStreamName == "" {
+		return nil, fmt.Errorf("cloudwatch log group and/or stream name must be specified for output type %s", c.Output.Type)
+	}
+
+	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(c.AWSCfg.Profile), config.WithRegion(c.AWSCfg.Region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default aws config: %w", err)
 	}
@@ -50,40 +58,26 @@ func newCloudWatchLogExporter(ctx context.Context, conf *conf.Config) (*CloudWat
 	}, nil
 }
 
-func (ce CloudWatchExporter) Start(data <-chan *[]byte) <-chan error {
-	errChan := make(chan error)
+func (ce CloudWatchExporter) send(data *[]byte) error {
+	record := cloudwatchlogs.PutLogEventsInput{
+		LogGroupName:  aws.String(ce.cfg.LogGroupName),
+		LogStreamName: aws.String(ce.cfg.LogStreamName),
+		LogEvents: []types.InputLogEvent{
+			{
+				Message:   aws.String(string(*data)),
+				Timestamp: aws.Int64(time.Now().UnixMilli()),
+			},
+		},
+	}
 
-	go func() {
-		for {
-			select {
-			case d := <-data:
-				record := cloudwatchlogs.PutLogEventsInput{
-					LogGroupName:  aws.String(ce.cfg.LogGroupName),
-					LogStreamName: aws.String(ce.cfg.LogStreamName),
-					LogEvents: []types.InputLogEvent{
-						{
-							Message:   aws.String(string(*d)),
-							Timestamp: aws.Int64(time.Now().UnixMilli()),
-						},
-					},
-				}
+	_, err := ce.cloudwatchClient.PutLogEvents(context.Background(), &record)
+	if err != nil {
+		return fmt.Errorf("unable to write to cloudwatch log group  %s: %w", ce.cfg.LogGroupName, err)
+	}
 
-				_, err := ce.cloudwatchClient.PutLogEvents(context.Background(), &record)
-				if err != nil {
-					errChan <- fmt.Errorf("unable to write to cloudwatch log group  %s: %w", ce.cfg.LogGroupName, err)
-					return
-				}
-			case <-ce.shChan:
-				slog.Info("shutting down cloudwatch exporter")
-				return
-			}
-
-		}
-	}()
-
-	return errChan
+	return nil
 }
 
-func (ce CloudWatchExporter) Stop() {
+func (ce CloudWatchExporter) stop() {
 	close(ce.shChan)
 }

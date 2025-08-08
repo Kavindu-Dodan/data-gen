@@ -6,10 +6,10 @@ A simple data generator with export capability to various destinations
 
 Require Go version 1.24+
 
-- Clone the repository
+- Clone the repository (alternatively download a latest release)
 - Copy `config.sample.yaml` and edit as needed.
 - Start the data generator with config file as the only parameter
-  `go run cmd/main.go --configFile ./config.yaml`
+  `go run cmd/main.go --config ./config.yaml`
 
 ## Configurations
 
@@ -18,29 +18,40 @@ Check `config.sample.yaml` for reference.
 
 ### Input configurations
 
-Given below are supported input types,
+Given below are supported input types and their related environment variable overrides,
 
-- LOGS : ECS (Elastic Common Schema) formated logs based on zap
+| YAML Property     | Environment Variable        | Description                                                                                                      |
+|-------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------|
+| `type`            | `ENV_INPUT_TYPE`            | Specifies the input data type (e.g., `LOGS`, `METRICS`, `ALB`, `VPC`).                                           |
+| `delay`           | `ENV_INPUT_DELAY`           | Delay between a data point. Accepts value in format like `5s` (5 seconds), `10ms` (10 milliseconds).             |
+| `batching`        | `ENV_INPUT_BATCHING`        | Set time delay between data batches. Accepts a time value similar to delay. Default is set to `0` (no batching). |
+| `max_batch_size`  | `ENV_INPUT_MAX_BATCH_SIZE`  | Set maximum byte size of a batch. Default is to ignore (no max size).                                            |
+| `max_data_points` | `ENV_INPUT_MAX_DATA_POINTS` | Set maximum amount of data points to generate. Default is to ignore (no max limit).                              |
+
+Note about input `type`,
+
+- LOGS : ECS (Elastic Common Schema) formatted logs based on zap
 - METRICS: Generate metrics similar to a CloudWatch metrics entry
 - ALB : Generate AWS ALB formatted log with some random content
 - VPC: Generate AWS VPC formatted logs with randomized content
-
-Other input configuration,
-
-- delay : Delay between a data point. Accepts value in acceptable format like 5s (5 Seconds), 10ms (10 milliseconds)
-- batching: Set whether to batch input generated data. Accepts a time value similar to delay. Default is set to 0 (no batching)
 
 Example:
 
 ```yaml
 input:
-  type: LOGS # Input type LOGS
-  delay: 2s  # 2 Seconds between each data point
+  type: LOGS             # Input type LOGS
+  delay: 500ms           # 500 milliseconds between each data point
+  batching: 10s          # Emit generated data batched within 10 seconds
+  max_batch_size: 10000  # Limit maximum batch size to 10,000 bytes. The output is capped at 1000 bytes/second max
+  max_data_points: 10000 # Exit input after generating 10,000 data points
 ```
+
+> [!TIP]
+> When max_batch_size is reached, elapsed time for batching will be considered before generating new data
 
 ### Output configurations
 
-Given below are supported output types,
+Given below are supported output types (environment variable `ENV_OUT_TYPE`),
 
 - FILE: Output to a file
 - FIREHOSE: Output to a Firehose stream
@@ -51,7 +62,9 @@ Sections below provide output specific configurations
 
 #### FILE
 
-- location : Output file location. Default to `./out`
+| YAML Property | Environment Variable | Description                                                                                                                |
+|---------------|----------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `location`    | `ENV_OUT_LOCATION`   | Output file location. Default to `./out`. When batching, file suffix will increment with numbers (e.g., `out_0`, `out_2`). |
 
 Example:
 
@@ -64,9 +77,11 @@ output:
 
 #### S3
 
-- s3Bucket : S3 bucket name (required)
-- bucketSeconds: Period between two bucket entries. Default to 120 Seconds
-- pathPrefix: Optional prefix for the bucket entry. Default to `logFile-`
+| YAML Property | Environment Variable  | Description                                                  |
+|---------------|-----------------------|--------------------------------------------------------------|
+| `s3_bucket`   | `ENV_OUT_S3_BUCKET`   | S3 bucket name (required).                                   |
+| `compression` | `ENV_OUT_COMPRESSION` | To compress or not the output. Currently supports `gzip`.    |
+| `path_prefix` | `ENV_OUT_PATH_PREFIX` | Optional prefix for the bucket entry. Default to `logFile-`. |
 
 Example:
 
@@ -74,14 +89,16 @@ Example:
 output:
   type: S3
   config:
-    s3Bucket: "testing-bucket"
-    bucketSeconds: 10
-    pathPrefix: "datagen"
+    s3_bucket: "testing-bucket"
+    compression: gzip
+    path_refix: "datagen"
 ```
 
 #### FIREHOSE
 
-- stream_name: Firehose stream name (required)
+| YAML Property | Environment Variable  | Description                      |
+|---------------|-----------------------|----------------------------------|
+| `stream_name` | `ENV_OUT_STREAM_NAME` | Firehose stream name (required). |
 
 Example:
 
@@ -94,8 +111,10 @@ output:
 
 #### CLOUDWATCH_LOG
 
-- logGroup : Cloudwatch log group name
-- logStream : Log group stream name
+| YAML Property | Environment Variable | Description                |
+|---------------|----------------------|----------------------------|
+| `log_group`   | `ENV_OUT_LOG_GROUP`  | CloudWatch log group name. |
+| `log_stream`  | `ENV_OUT_LOG_STREAM` | Log group stream name.     |
 
 Example:
 
@@ -109,7 +128,17 @@ output:
 
 ### CSP configurations
 
-Currently, this project only support AWS CSP. Given below are available configurations,
+Currently, this project only support AWS Cloud Service Provider (CSP). Given below are available configurations,
 
-- region: Region to use by exporters. Default to us-east-1
-- profile: Credential profile to use by exporters. Default to default
+| YAML Property | Environment Variable | Description                                                   |
+|---------------|----------------------|---------------------------------------------------------------|
+| `region`      | `AWS_REGION`         | Region to use by exporters. Default is `us-east-1`.           |
+| `profile`     | `AWS_PROFILE`        | Credential profile to use by exporters. Default is `default`. |
+
+Example:
+
+```yaml
+aws:
+  region: "us-east-1"
+  profile: "default"
+```

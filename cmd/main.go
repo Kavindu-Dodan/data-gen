@@ -18,7 +18,7 @@ import (
 func main() {
 	ctx := context.Background()
 
-	var cfgLocation = flag.String("configFile", "./config.yaml", "configuration file. Default to `./config.yaml`")
+	var cfgLocation = flag.String("config", "./config.yaml", "configuration file. Default to `./config.yaml`")
 	flag.Parse()
 
 	b, err := os.ReadFile(*cfgLocation)
@@ -56,19 +56,22 @@ func main() {
 		return
 	}
 
-	outChan, genError := generator.Start(duration)
-	expErr := exporter.Start(outChan)
+	dataInput, inputClose, genError := generator.Start(duration)
+	expErr := exporter.Start(dataInput)
 
 	select {
 	case <-sigs:
+	case <-inputClose:
 	case er := <-genError:
 		slog.Error(fmt.Sprintf("Error from generator: %s", er.Error()))
 	case er := <-expErr:
 		slog.Error(fmt.Sprintf("Error from exporter: %s", er.Error()))
 	}
 
-	slog.Info("Shutting down")
+	slog.Info("Shutting down...")
+	// provide a grace period to complete the exports
+	<-time.After(time.Second * 2)
 	generator.Stop()
 	exporter.Stop()
-	<-time.After(time.Second)
+
 }
