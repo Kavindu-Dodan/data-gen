@@ -3,7 +3,7 @@ package exporters
 import (
 	"context"
 	"fmt"
-	"log/slog"
+	"os"
 
 	"data-gen/conf"
 
@@ -22,21 +22,26 @@ type firehoseCfg struct {
 	StreamName string `yaml:"stream_name"`
 }
 
-func newFirehoseExporter(ctx context.Context, conf *conf.Config) (*FirehoseExporter, error) {
+func newFirehoseExporter(ctx context.Context, c *conf.Config) (*FirehoseExporter, error) {
 	var cfg firehoseCfg
-	err := conf.Output.Conf.Decode(&cfg)
+	err := c.Output.Conf.Decode(&cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(conf.AWSCfg.Profile), config.WithRegion(conf.AWSCfg.Region))
+	// load env variable overrides if any
+	if v := os.Getenv(conf.EnvOutStreamName); v != "" {
+		cfg.StreamName = v
+	}
+
+	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(c.AWSCfg.Profile), config.WithRegion(c.AWSCfg.Region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default aws config: %w", err)
 	}
 
 	fhClient := firehose.New(firehose.Options{
 		Credentials: loadedAwsConfig.Credentials,
-		Region:      conf.AWSCfg.Region,
+		Region:      c.AWSCfg.Region,
 	})
 
 	return &FirehoseExporter{
@@ -46,33 +51,20 @@ func newFirehoseExporter(ctx context.Context, conf *conf.Config) (*FirehoseExpor
 	}, nil
 }
 
-func (f *FirehoseExporter) Start(c <-chan *[]byte) <-chan error {
-	errChan := make(chan error)
+func (f *FirehoseExporter) send(data *[]byte) error {
+	input := firehose.PutRecordInput{
+		DeliveryStreamName: &f.cfg.StreamName,
+		Record:             &types.Record{Data: *data},
+	}
 
-	go func() {
-		for {
-			select {
-			case d := <-c:
-				input := firehose.PutRecordInput{
-					DeliveryStreamName: &f.cfg.StreamName,
-					Record:             &types.Record{Data: *d},
-				}
+	_, err := f.client.PutRecord(context.Background(), &input)
+	if err != nil {
+		return fmt.Errorf("unable to write to firehose stream  %s: %w", f.cfg.StreamName, err)
+	}
 
-				_, err := f.client.PutRecord(context.Background(), &input)
-				if err != nil {
-					errChan <- fmt.Errorf("unable to write to firehose stream  %s: %w", f.cfg.StreamName, err)
-					return
-				}
-			case <-f.shChan:
-				slog.Info("shutting down firehose exporter")
-				return
-			}
-		}
-	}()
-
-	return errChan
+	return nil
 }
 
-func (f *FirehoseExporter) Stop() {
+func (f *FirehoseExporter) stop() {
 	close(f.shChan)
 }

@@ -37,61 +37,127 @@ func GeneratorFor(config *conf.Config) (*Generator, error) {
 }
 
 type Generator struct {
-	config conf.InputConfig
-	input  input
-	shChan chan struct{}
+	config     conf.InputConfig
+	input      input
+	buffer     bytes.Buffer
+	dataChan   chan *[]byte
+	errChan    chan error
+	inputClose chan struct{}
+	shChan     chan struct{}
+
+	dataPoints int64
 }
 
 func newGenerator(cfg conf.InputConfig, in input) *Generator {
 	return &Generator{
-		config: cfg,
-		input:  in,
-		shChan: make(chan struct{}),
+		config:     cfg,
+		input:      in,
+		dataChan:   make(chan *[]byte, 2),
+		errChan:    make(chan error, 2),
+		inputClose: make(chan struct{}),
+		shChan:     make(chan struct{}),
 	}
 }
 
-func (g *Generator) Start(delay time.Duration) (<-chan *[]byte, <-chan error) {
-	dChan := make(chan *[]byte)
-	errChan := make(chan error)
-
+func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose <-chan struct{}, error <-chan error) {
 	go func() {
-		duration, err := time.ParseDuration(g.config.Batching)
+		batchingDuration, err := time.ParseDuration(g.config.Batching)
 		if err != nil {
-			errChan <- fmt.Errorf("failed to parse batching duration: %s", err)
+			g.errChan <- fmt.Errorf("failed to parse batching duration: %s", err)
 			return
 		}
 
-		var buf bytes.Buffer
+		// validate for duration & batching to avoid spamming
+		if delay == 0 && batchingDuration == 0 && g.config.MaxSize == 0 {
+			g.errChan <- fmt.Errorf("batching & max size must be set when data delay is set to zero")
+			return
+		}
+
+		buf := newTrackedBuffer()
 		lastBatch := time.Now()
 
 		for {
 			select {
 			case <-time.After(delay):
+				// update with latest data
 				got, err := g.input.Get()
 				if err != nil {
-					errChan <- err
+					g.errChan <- err
+					return
+				}
+				g.dataPoints += 1
+
+				_, err = buf.write(got)
+				if err != nil {
+					g.errChan <- err
 				}
 
-				buf.Write(got)
-
-				// check for batching
-				if time.Since(lastBatch) > duration {
-					lastBatch = time.Now()
-					b := buf.Bytes()
-					dChan <- &b
-					buf.Reset()
+				// check for batching,  max size to emit or max data points
+				since := time.Since(lastBatch)
+				if since > batchingDuration || (g.config.MaxSize != 0 && buf.size() > int64(g.config.MaxSize)) || g.dataPoints >= g.config.MaxDataPoints {
+					b := buf.getAndRest()
+					g.dataChan <- &b
 					g.input.ResetBatch()
+
+					// if batching duration is not elapsed, pause
+					if since < batchingDuration {
+						select {
+						case <-time.After(batchingDuration - since):
+						case <-g.shChan:
+							slog.Info("Shutting down Generator")
+							return
+						}
+					}
+
+					// update last batch time
+					lastBatch = time.Now()
 				}
 			case <-g.shChan:
 				slog.Info("Shutting down Generator")
 				return
 			}
+
+			// check for data point limit
+			if g.config.MaxDataPoints > 0 && g.dataPoints >= g.config.MaxDataPoints {
+				// notify input close and exit
+				close(g.inputClose)
+				slog.Info(fmt.Sprintf("Generator shutting down after %d points", g.config.MaxDataPoints))
+				return
+			}
 		}
 	}()
 
-	return dChan, errChan
+	return g.dataChan, g.inputClose, g.errChan
 }
 
 func (g *Generator) Stop() {
 	close(g.shChan)
+}
+
+type trackedBuffer struct {
+	buf bytes.Buffer
+	len int64
+}
+
+func newTrackedBuffer() trackedBuffer {
+	return trackedBuffer{
+		buf: bytes.Buffer{},
+	}
+}
+
+func (t *trackedBuffer) write(bytes []byte) (int, error) {
+	t.len += int64(len(bytes))
+	return t.buf.Write(bytes)
+}
+
+func (t *trackedBuffer) getAndRest() []byte {
+	b := make([]byte, t.buf.Len())
+	copy(b, t.buf.Bytes())
+	t.buf.Reset()
+	t.len = 0
+	return b
+}
+
+func (t *trackedBuffer) size() int64 {
+	return t.len
 }

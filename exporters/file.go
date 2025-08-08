@@ -2,7 +2,6 @@ package exporters
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 
 	"data-gen/conf"
@@ -12,6 +11,7 @@ const defaultLocation = "./out"
 
 type FileExporter struct {
 	cfg    *fileCfg
+	entry  int
 	shChan chan struct{}
 }
 
@@ -32,40 +32,27 @@ func newFileExporter(config *conf.Config) (*FileExporter, error) {
 		return nil, err
 	}
 
+	// load env variable overrides if any
+	if v := os.Getenv(conf.EnvOutLocation); v != "" {
+		cfg.Location = v
+	}
+
 	return &FileExporter{
 		cfg:    cfg,
 		shChan: make(chan struct{}),
 	}, nil
 }
 
-func (f FileExporter) Start(c <-chan *[]byte) <-chan error {
-	errChan := make(chan error)
+func (f *FileExporter) send(data *[]byte) error {
+	file, err := os.OpenFile(fmt.Sprintf("%s_%d", f.cfg.Location, f.entry), os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return fmt.Errorf("unable to open file %s: %w", f.cfg.Location, err)
+	}
+	_, err = file.Write(*data)
+	if err != nil {
+		return fmt.Errorf("unable to write to file %s: %w", f.cfg.Location, err)
+	}
 
-	go func() {
-		file, err := os.OpenFile(f.cfg.Location, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
-		if err != nil {
-			errChan <- fmt.Errorf("unable to open file %s: %w", f.cfg.Location, err)
-			return
-		}
-
-		for {
-			select {
-			case d := <-c:
-				_, err := file.Write(*d)
-				if err != nil {
-					errChan <- fmt.Errorf("unable to write to file %s: %w", f.cfg.Location, err)
-					return
-				}
-			case <-f.shChan:
-				slog.Info("shutting down file exporter")
-				return
-			}
-		}
-	}()
-
-	return errChan
-}
-
-func (f FileExporter) Stop() {
-	close(f.shChan)
+	f.entry++
+	return nil
 }
