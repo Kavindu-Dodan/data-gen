@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -16,6 +17,7 @@ import (
 
 const (
 	defaultBucketPrefix = "logFile-"
+	arnPrefix           = "arn:aws:s3:::"
 )
 
 type S3BucketExporter struct {
@@ -59,6 +61,8 @@ func newS3BucketExporter(ctx context.Context, configuration *conf.Config) (*S3Bu
 	if cfg.Bucket == "" {
 		return nil, fmt.Errorf("s3 Bucket Name is empty, please configure and try again")
 	}
+
+	cfg.Bucket = toBucketName(cfg.Bucket)
 
 	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(configuration.AWSCfg.Profile), config.WithRegion(configuration.AWSCfg.Region))
 	if err != nil {
@@ -126,4 +130,12 @@ func gzipCompress(input []byte) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+func toBucketName(bucket string) string {
+	if strings.HasPrefix(bucket, arnPrefix) {
+		return strings.TrimPrefix(bucket, arnPrefix)
+	}
+
+	return bucket
 }
