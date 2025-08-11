@@ -94,7 +94,7 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 
 				// check for batching,  max size to emit or max data points
 				since := time.Since(lastBatch)
-				if since > batchingDuration || (g.config.MaxSize != 0 && buf.size() > int64(g.config.MaxSize)) || g.dataPoints >= g.config.MaxDataPoints {
+				if since > batchingDuration || (g.config.MaxSize != 0 && buf.size() > int64(g.config.MaxSize)) || (g.config.MaxDataPoints > 0 && g.dataPoints >= g.config.MaxDataPoints) {
 					b := buf.getAndRest()
 					g.dataChan <- &b
 					g.input.ResetBatch()
