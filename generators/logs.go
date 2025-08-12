@@ -11,6 +11,7 @@ import (
 
 // LogGenerator generate logs in Elastic log format based on ZAP
 type LogGenerator struct {
+	buf    trackedBuffer
 	logger *zap.Logger
 	writer *writer
 	shChan chan struct{}
@@ -25,19 +26,22 @@ func NewLogGenerator() *LogGenerator {
 	logger := zap.New(core, zap.AddCaller())
 
 	return &LogGenerator{
+		buf:    newTrackedBuffer(),
 		logger: logger,
 		writer: &w,
 		shChan: shutdown,
 	}
 }
 
-func (l LogGenerator) Get() ([]byte, error) {
+func (l *LogGenerator) Generate() (int64, error) {
 	l.logger.Info(fmt.Sprintf("log entry: %s", uuid.NewString()))
-	return l.writer.data, nil
+	err := l.buf.write(l.writer.data)
+
+	return l.buf.size(), err
 }
 
-func (l LogGenerator) ResetBatch() {
-	// no-op
+func (l *LogGenerator) GetAndReset() []byte {
+	return l.buf.getAndReset()
 }
 
 // writer helps to extract logs and emit through com chan

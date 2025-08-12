@@ -5,9 +5,16 @@ import (
 )
 
 type ALBGen struct {
+	buf trackedBuffer
 }
 
-func (a *ALBGen) Get() ([]byte, error) {
+func NewALBGen() *ALBGen {
+	return &ALBGen{
+		buf: newTrackedBuffer(),
+	}
+}
+
+func (a *ALBGen) Generate() (int64, error) {
 	customizer := albCustomizer{
 		logType:        randomALBType(),
 		timestamp:      iso8601Now(),
@@ -23,28 +30,19 @@ func (a *ALBGen) Get() ([]byte, error) {
 		requestID:      "TID_123456789",
 	}
 
-	return []byte(buildALBLogLine(customizer)), nil
+	err := a.buf.write([]byte(buildALBLogLine(customizer)))
+	if err != nil {
+		return 0, err
+	}
+
+	return a.buf.size(), err
 }
 
-func (a *ALBGen) ResetBatch() {
-	// no-op
+func (a *ALBGen) GetAndReset() []byte {
+	return a.buf.getAndReset()
 }
 
 // helpers
-type albCustomizer struct {
-	logType        string
-	timestamp      string
-	creationTime   string
-	request        string
-	elbID          string
-	targetARN      string
-	traceID        string
-	userAgent      string
-	clientIPPort   string
-	targetIPPort   string
-	targetPortList string
-	requestID      string
-}
 
 const (
 	requestProcessingTimeMs  = "0.000"
@@ -66,6 +64,21 @@ const (
 	targetHealthReason       = `"-"`
 	targetHealthDescription  = `"-"`
 )
+
+type albCustomizer struct {
+	logType        string
+	timestamp      string
+	creationTime   string
+	request        string
+	elbID          string
+	targetARN      string
+	traceID        string
+	userAgent      string
+	clientIPPort   string
+	targetIPPort   string
+	targetPortList string
+	requestID      string
+}
 
 func buildALBLogLine(input albCustomizer) string {
 	logLine := fmt.Sprintf(

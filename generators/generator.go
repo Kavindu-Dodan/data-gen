@@ -10,15 +10,18 @@ import (
 )
 
 const (
-	logs    = "LOGS"
-	metrics = "METRICS"
-	alb     = "ALB"
-	vpc     = "VPC"
+	logs       = "LOGS"
+	metrics    = "METRICS"
+	alb        = "ALB"
+	vpc        = "VPC"
+	CloudTrail = "CLOUDTRAIL"
 )
 
 type input interface {
-	Get() ([]byte, error)
-	ResetBatch()
+	// Generate and accumulate data and return the size of the data generated
+	Generate() (int64, error)
+	// GetAndReset returns the accumulated data and resets the buffer
+	GetAndReset() []byte
 }
 
 func GeneratorFor(config *conf.Config) (*Generator, error) {
@@ -28,9 +31,11 @@ func GeneratorFor(config *conf.Config) (*Generator, error) {
 	case metrics:
 		return newGenerator(config.Input, NewMetricGenerator()), nil
 	case alb:
-		return newGenerator(config.Input, &ALBGen{}), nil
+		return newGenerator(config.Input, NewALBGen()), nil
 	case vpc:
 		return newGenerator(config.Input, newVPCGen()), nil
+	case CloudTrail:
+		return newGenerator(config.Input, newCloudTrailGen()), nil
 	}
 
 	return nil, fmt.Errorf("unknown generator type: %s", config.Input.Type)
@@ -73,31 +78,28 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 			return
 		}
 
-		buf := newTrackedBuffer()
 		lastBatch := time.Now()
 
 		for {
 			select {
 			case <-time.After(delay):
 				// update with latest data
-				got, err := g.input.Get()
+				currentSize, err := g.input.Generate()
 				if err != nil {
 					g.errChan <- err
 					return
 				}
 				g.dataPoints += 1
 
-				_, err = buf.write(got)
-				if err != nil {
-					g.errChan <- err
-				}
-
-				// check for batching,  max size to emit or max data points
 				since := time.Since(lastBatch)
-				if since > batchingDuration || (g.config.MaxSize != 0 && buf.size() > int64(g.config.MaxSize)) || (g.config.MaxDataPoints > 0 && g.dataPoints >= g.config.MaxDataPoints) {
-					b := buf.getAndRest()
+
+				// check for following before emitting
+				// - batching duration
+				// - max size (iff defined)
+				// - max data points (iff defined)
+				if since > batchingDuration || (g.config.MaxSize != 0 && currentSize > int64(g.config.MaxSize)) || (g.config.MaxDataPoints > 0 && g.dataPoints >= g.config.MaxDataPoints) {
+					b := g.input.GetAndReset()
 					g.dataChan <- &b
-					g.input.ResetBatch()
 
 					// if batching duration is not elapsed, pause
 					if since < batchingDuration {
@@ -134,6 +136,7 @@ func (g *Generator) Stop() {
 	close(g.shChan)
 }
 
+// trackedBuffer is a helper to track the size of the buffer
 type trackedBuffer struct {
 	buf bytes.Buffer
 	len int64
@@ -145,12 +148,19 @@ func newTrackedBuffer() trackedBuffer {
 	}
 }
 
-func (t *trackedBuffer) write(bytes []byte) (int, error) {
-	t.len += int64(len(bytes))
-	return t.buf.Write(bytes)
+func (t *trackedBuffer) overWrite(p []byte) error {
+	t.buf.Reset()
+	t.len = 0
+	return t.write(p)
 }
 
-func (t *trackedBuffer) getAndRest() []byte {
+func (t *trackedBuffer) write(bytes []byte) error {
+	t.len += int64(len(bytes))
+	_, err := t.buf.Write(bytes)
+	return err
+}
+
+func (t *trackedBuffer) getAndReset() []byte {
 	b := make([]byte, t.buf.Len())
 	copy(b, t.buf.Bytes())
 	t.buf.Reset()

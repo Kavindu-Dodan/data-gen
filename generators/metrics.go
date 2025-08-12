@@ -7,21 +7,28 @@ import (
 )
 
 type MetricGenerator struct {
+	buf    trackedBuffer
 	shChan chan struct{}
 }
 
 func NewMetricGenerator() *MetricGenerator {
 	return &MetricGenerator{
+		buf:    newTrackedBuffer(),
 		shChan: make(chan struct{}),
 	}
 }
 
-func (m *MetricGenerator) Get() ([]byte, error) {
-	return m.makeNewMetricsEntry()
+func (m *MetricGenerator) Generate() (int64, error) {
+	entry, err := m.makeNewMetricsEntry()
+	if err != nil {
+		return 0, err
+	}
+	err = m.buf.write(entry)
+	return m.buf.size(), err
 }
 
-func (m *MetricGenerator) ResetBatch() {
-	// no-op
+func (m *MetricGenerator) GetAndReset() []byte {
+	return m.buf.getAndReset()
 }
 
 func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {
