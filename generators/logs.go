@@ -41,7 +41,7 @@ func (l *LogGenerator) Generate() (int64, error) {
 }
 
 func (l *LogGenerator) GetAndReset() []byte {
-	return l.buf.getAndRest()
+	return l.buf.getAndReset()
 }
 
 // writer helps to extract logs and emit through com chan

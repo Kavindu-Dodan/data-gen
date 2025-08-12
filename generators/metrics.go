@@ -28,7 +28,7 @@ func (m *MetricGenerator) Generate() (int64, error) {
 }
 
 func (m *MetricGenerator) GetAndReset() []byte {
-	return m.buf.getAndRest()
+	return m.buf.getAndReset()
 }
 
 func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {
