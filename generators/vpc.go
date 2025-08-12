@@ -51,7 +51,7 @@ func (v *VPCGen) Generate() (int64, error) {
 
 func (v *VPCGen) GetAndReset() []byte {
 	v.init = true
-	return v.buf.getAndRest()
+	return v.buf.getAndReset()
 }
 
 type vpcCustomizer struct {

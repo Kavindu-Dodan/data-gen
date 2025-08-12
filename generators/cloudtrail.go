@@ -3,7 +3,6 @@ package generators
 import (
 	"encoding/json"
 	"github.com/google/uuid"
-	"unsafe"
 )
 
 type cloudTrail struct {
@@ -44,8 +43,11 @@ func (c *cloudTrail) Generate() (int64, error) {
 
 	c.current = append(c.current, cloudTrailRecordFor(customizer))
 
-	sizeof := unsafe.Sizeof(c.current)
-	return int64(sizeof), nil
+	currentBytes, err := json.Marshal(c.current)
+	if err != nil {
+		return 0, err
+	}
+	return int64(len(currentBytes)), nil
 }
 
 func (c *cloudTrail) GetAndReset() []byte {
