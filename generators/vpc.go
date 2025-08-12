@@ -8,16 +8,18 @@ import (
 const header = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
 
 type VPCGen struct {
+	buf  trackedBuffer
 	init bool
 }
 
 func newVPCGen() *VPCGen {
 	return &VPCGen{
+		buf:  newTrackedBuffer(),
 		init: true,
 	}
 }
 
-func (v *VPCGen) Get() ([]byte, error) {
+func (v *VPCGen) Generate() (int64, error) {
 	var data []byte
 
 	if v.init {
@@ -43,11 +45,13 @@ func (v *VPCGen) Get() ([]byte, error) {
 	}
 
 	data = append(data, []byte(buildVPCLogLine(customizer))...)
-	return data, nil
+	err := v.buf.write(data)
+	return v.buf.size(), err
 }
 
-func (v *VPCGen) ResetBatch() {
+func (v *VPCGen) GetAndReset() []byte {
 	v.init = true
+	return v.buf.getAndRest()
 }
 
 type vpcCustomizer struct {
