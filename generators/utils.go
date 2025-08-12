@@ -61,7 +61,7 @@ func randomAWSAccountID() string {
 }
 
 func ctUserIdentity() UserIdentity {
-	userName := fmt.Sprintf("user%d", rand.Intn(10))
+	userName := fmt.Sprintf("user%d", rand.Intn(1000))
 	accountID := randomSampleAccountID()
 
 	arn := randomIAMArn(accountID, userName)
@@ -156,9 +156,9 @@ func generateRequestAndResource(eventName string, accID string) (map[string]any,
 }
 
 func randomBucketName() string {
-	return randomAZaz09String(2) + "-" + randomAZaz09String(2)
+	return randomAZaz09String(4) + "-" + randomAZaz09String(4)
 }
 
 func randomS3ObjectKey() string {
-	return "object_" + randomAZaz09String(2) + ".txt"
+	return "object_" + randomAZaz09String(5) + ".txt"
 }

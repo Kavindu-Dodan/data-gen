@@ -160,7 +160,7 @@ func (t *trackedBuffer) write(bytes []byte) error {
 	return err
 }
 
-func (t *trackedBuffer) getAndReset() []byte {
+func (t *trackedBuffer) getAndRest() []byte {
 	b := make([]byte, t.buf.Len())
 	copy(b, t.buf.Bytes())
 	t.buf.Reset()

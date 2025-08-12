@@ -39,7 +39,7 @@ func (a *ALBGen) Generate() (int64, error) {
 }
 
 func (a *ALBGen) GetAndReset() []byte {
-	return a.buf.getAndReset()
+	return a.buf.getAndRest()
 }
 
 // helpers
