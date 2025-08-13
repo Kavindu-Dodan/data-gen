@@ -27,6 +27,7 @@ Given below are supported input types and their related environment variable ove
 | `batching`        | `ENV_INPUT_BATCHING`        | Set time delay between data batches. Accepts a time value similar to delay. Default is set to `0` (no batching). |
 | `max_batch_size`  | `ENV_INPUT_MAX_BATCH_SIZE`  | Set maximum byte size of a batch. Default is to ignore (no max size).                                            |
 | `max_data_points` | `ENV_INPUT_MAX_DATA_POINTS` | Set maximum amount of data points to generate. Default is to ignore (no max limit).                              |
+| `max_runtime`     | `ENV_INPUT_MAX_RUNTIME`     | Set maximum duration load generator will run. Default is to ignore (no max limit).                               |
 
 Note about input `type`,
 
@@ -34,6 +35,7 @@ Note about input `type`,
 - `METRICS`: Generate metrics similar to a CloudWatch metrics entry
 - `ALB` : Generate AWS ALB formatted log with some random content
 - `VPC`: Generate AWS VPC formatted logs with randomized content
+- `CLOUDTRAIL`: Generate AWS CloudTrail formatted logs with randomized content. Data is generated for AWS S3 Data Event.
 
 Example:
 
@@ -162,7 +164,7 @@ output:
 
 ### 2. Continuous Log Generation with batching to a S3 bucket
 
-Generate ALB logs. No delay between data points (continuous data generating). 
+Generate ALB logs. No delay between data points (continuous data generating).
 Limit batching to 10 seconds and max batch size is set to 10MB. This translates to ~1 MB/second data load.
 S3 files will be in `gzip` format.
 
@@ -188,6 +190,23 @@ input:
   type: VPC
   delay: 1s
   max_data_points: 2
+output:
+  type: s3
+  config:
+    s3_bucket: "testing-bucket"
+    compression: "gzip"
+```
+
+### 4. Limit runtime
+
+Generate CLOUDTRAIL logs and limit to generator runtime of 5 minutes.
+
+```yaml
+input:
+  type: CLOUDTRAIL
+  delay: 10us       # 10 microseconds between data points
+  batching: 10s
+  max_runtime: 5m   # 5 minutes
 output:
   type: s3
   config:
