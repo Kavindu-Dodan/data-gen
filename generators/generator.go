@@ -49,8 +49,6 @@ type Generator struct {
 	errChan    chan error
 	inputClose chan struct{}
 	shChan     chan struct{}
-
-	dataPoints int64
 }
 
 func newGenerator(cfg conf.InputConfig, in input) *Generator {
@@ -78,6 +76,8 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 			return
 		}
 
+		dataPoints := int64(0)
+		currentPayload := int64(0)
 		lastBatch := time.Now()
 
 		for {
@@ -89,7 +89,8 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 					g.errChan <- err
 					return
 				}
-				g.dataPoints += 1
+				dataPoints += 1
+				currentPayload += 1
 
 				since := time.Since(lastBatch)
 
@@ -97,7 +98,7 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 				// - batching duration
 				// - max size (iff defined)
 				// - max data points (iff defined)
-				if since > batchingDuration || (g.config.MaxSize != 0 && currentSize > int64(g.config.MaxSize)) || (g.config.MaxDataPoints > 0 && g.dataPoints >= g.config.MaxDataPoints) {
+				if since > batchingDuration || (g.config.MaxSize != 0 && currentSize > int64(g.config.MaxSize)) || (g.config.MaxDataPoints > 0 && dataPoints >= g.config.MaxDataPoints) {
 					b := g.input.GetAndReset()
 					g.dataChan <- &b
 
@@ -113,6 +114,8 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 
 					// update last batch time
 					lastBatch = time.Now()
+					slog.Debug("Emitted payload", slog.Int64("dataPoints", currentPayload))
+					currentPayload = 0
 				}
 			case <-g.shChan:
 				slog.Info("Shutting down Generator")
@@ -120,7 +123,7 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 			}
 
 			// check for data point limit
-			if g.config.MaxDataPoints > 0 && g.dataPoints >= g.config.MaxDataPoints {
+			if g.config.MaxDataPoints > 0 && dataPoints >= g.config.MaxDataPoints {
 				// notify input close and exit
 				close(g.inputClose)
 				slog.Info(fmt.Sprintf("Generator shutting down after %d points", g.config.MaxDataPoints))
@@ -146,12 +149,6 @@ func newTrackedBuffer() trackedBuffer {
 	return trackedBuffer{
 		buf: bytes.Buffer{},
 	}
-}
-
-func (t *trackedBuffer) overWrite(p []byte) error {
-	t.buf.Reset()
-	t.len = 0
-	return t.write(p)
 }
 
 func (t *trackedBuffer) write(bytes []byte) error {
