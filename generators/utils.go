@@ -71,7 +71,7 @@ func ctUserIdentity() UserIdentity {
 		PrincipalID: samplePrincipalIDs[rand.Intn(len(samplePrincipalIDs))],
 		Arn:         arn,
 		AccountID:   accountID,
-		AccessKeyID: randomAZaz09String(20),
+		AccessKeyID: "AKIA" + randomAZ09String(4),
 		UserName:    userName,
 	}
 }
@@ -156,7 +156,7 @@ func generateRequestAndResource(eventName string, accID string) (map[string]any,
 }
 
 func randomBucketName() string {
-	return randomAZaz09String(2) + "-" + randomAZaz09String(2)
+	return "bucket-" + fmt.Sprintf("%03d", rand.Intn(1000))
 }
 
 func randomS3ObjectKey() string {

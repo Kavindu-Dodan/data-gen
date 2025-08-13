@@ -6,7 +6,8 @@ import (
 )
 
 type cloudTrail struct {
-	current []cloudTrailRecord
+	current     []cloudTrailRecord
+	currentSize int64
 }
 
 func newCloudTrailGen() *cloudTrail {
@@ -35,24 +36,28 @@ func (c *cloudTrail) Generate() (int64, error) {
 		requestID:          randomAZ09String(12),
 		requestParameters:  parameters,
 		resources:          []any{resources},
-		sharedEventID:      uuid.NewString(),
+		sharedEventID:      randomAZ09String(16),
 		sourceIPAddress:    randomIP(),
 		userAgent:          s3UserAgent,
 		userIdentity:       ctUserIdentity(),
 	}
 
-	c.current = append(c.current, cloudTrailRecordFor(customizer))
+	newRecord := cloudTrailRecordFor(customizer)
+	c.current = append(c.current, newRecord)
 
-	currentBytes, err := json.Marshal(c.current)
+	size, err := json.Marshal(newRecord)
 	if err != nil {
 		return 0, err
 	}
-	return int64(len(currentBytes)), nil
+
+	c.currentSize += int64(len(size))
+	return c.currentSize, nil
 }
 
 func (c *cloudTrail) GetAndReset() []byte {
 	marshal, _ := json.Marshal(cloudTrailLogFor(c.current))
 	c.current = []cloudTrailRecord{} // Reset current records
+	c.currentSize = 0                // Reset current size
 	return marshal
 }
 

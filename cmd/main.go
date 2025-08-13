@@ -19,6 +19,7 @@ func main() {
 	ctx := context.Background()
 
 	var cfgLocation = flag.String("config", "./config.yaml", "configuration file. Default to `./config.yaml`")
+	var debug = flag.Bool("debug", false, "enable debug logging")
 	flag.Parse()
 
 	b, err := os.ReadFile(*cfgLocation)
@@ -32,6 +33,15 @@ func main() {
 		slog.Error(fmt.Sprintf("Config file parsomg error: %s", err.Error()))
 		return
 	}
+
+	logLevel := slog.LevelInfo
+	if *debug {
+		logLevel = slog.LevelDebug
+	}
+
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	})))
 
 	slog.Info(fmt.Sprintf("Starting with configurations: %v", configurations.Print()))
 
