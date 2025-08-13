@@ -9,16 +9,18 @@ import (
 )
 
 const (
-	defaultProfile  = "default"
-	defaultRegion   = "us-east-1"
-	defaultDelay    = "5s"
-	defaultBatching = "0s"
+	defaultProfile     = "default"
+	defaultRegion      = "us-east-1"
+	defaultDelay       = "5s"
+	defaultBatching    = "0s"
+	defaultMaxDuration = "0s"
 
 	EnvInputType          = "ENV_INPUT_TYPE"
 	EnvInputDelay         = "ENV_INPUT_DELAY"
 	EnvInputBatching      = "ENV_INPUT_BATCHING"
 	EnvInputMaxBatchSize  = "ENV_INPUT_MAX_BATCH_SIZE"
 	EnvInputMaxDataPoints = "ENV_INPUT_MAX_DATA_POINTS"
+	EnvMaxRuntime         = "ENV_INPUT_MAX_RUNTIME"
 
 	EnvOutType        = "ENV_OUT_TYPE"
 	EnvOutLocation    = "ENV_OUT_LOCATION"
@@ -49,8 +51,8 @@ func newDefaultConfig() *Config {
 func (cfg *Config) Print() string {
 	sb := strings.Builder{}
 
-	sb.WriteString(fmt.Sprintf("[ Input - %s \t", cfg.Input.Print()))
-	sb.WriteString(fmt.Sprintf("Output - %s \t", cfg.Output.Print()))
+	sb.WriteString(fmt.Sprintf("[ Input - %s ", cfg.Input.Print()))
+	sb.WriteString(fmt.Sprintf("Output - %s ", cfg.Output.Print()))
 	sb.WriteString(fmt.Sprintf("AWS - %s ]", cfg.AWSCfg.Print()))
 
 	return strings.TrimSpace(sb.String())
@@ -63,12 +65,14 @@ type InputConfig struct {
 	Batching      string    `yaml:"batching"`
 	MaxSize       int       `yaml:"max_batch_size"`
 	MaxDataPoints int64     `yaml:"max_data_points"`
+	MaxRunTime    string    `yaml:"max_runtime"`
 }
 
 func newDefaultInputConfig() *InputConfig {
 	return &InputConfig{
-		Delay:    defaultDelay,
-		Batching: defaultBatching,
+		Delay:      defaultDelay,
+		Batching:   defaultBatching,
+		MaxRunTime: defaultMaxDuration,
 	}
 }
 
@@ -78,8 +82,9 @@ func (cfg *InputConfig) Print() string {
 	sb.WriteString(fmt.Sprintf("Type: %s, ", cfg.Type))
 	sb.WriteString(fmt.Sprintf("Delay: %s ", cfg.Delay))
 	sb.WriteString(fmt.Sprintf("Batching: %s ", cfg.Batching))
-	sb.WriteString(fmt.Sprintf("MaxBatchBytes: %d ", cfg.MaxSize))
-	sb.WriteString(fmt.Sprintf("MaxData points: %d ", cfg.MaxDataPoints))
+	sb.WriteString(fmt.Sprintf("Max Batch Bytes: %d ", cfg.MaxSize))
+	sb.WriteString(fmt.Sprintf("Max Data points: %d ", cfg.MaxDataPoints))
+	sb.WriteString(fmt.Sprintf("Max Runtime: %s ", cfg.MaxRunTime))
 
 	return sb.String()
 }
@@ -136,6 +141,9 @@ func NewConfig(input []byte) (*Config, error) {
 			return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchSize, err)
 		}
 		cfg.Input.MaxSize = size
+	}
+	if v := os.Getenv(EnvMaxRuntime); v != "" {
+		cfg.Input.MaxRunTime = v
 	}
 
 	if v := os.Getenv(EnvInputMaxDataPoints); v != "" {

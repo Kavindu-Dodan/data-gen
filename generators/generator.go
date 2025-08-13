@@ -70,6 +70,12 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 			return
 		}
 
+		maxDuration, err := time.ParseDuration(g.config.MaxRunTime)
+		if err != nil {
+			g.errChan <- fmt.Errorf("failed to parse max runtime: %s", err)
+			return
+		}
+
 		// validate for duration & batching to avoid spamming
 		if delay == 0 && batchingDuration == 0 && g.config.MaxSize == 0 {
 			g.errChan <- fmt.Errorf("batching & max size must be set when data delay is set to zero")
@@ -127,6 +133,14 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 				// notify input close and exit
 				close(g.inputClose)
 				slog.Info(fmt.Sprintf("Generator shutting down after %d points", g.config.MaxDataPoints))
+				return
+			}
+
+			// check for max runtime
+			if maxDuration > 0 && time.Since(lastBatch) >= maxDuration {
+				// notify input close and exit
+				close(g.inputClose)
+				slog.Info(fmt.Sprintf("Generator shutting down after max runtime of %s", maxDuration))
 				return
 			}
 		}
