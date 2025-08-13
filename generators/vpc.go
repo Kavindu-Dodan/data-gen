@@ -29,7 +29,7 @@ func (v *VPCGen) Generate() (int64, error) {
 
 	customizer := vpcCustomizer{
 		Version:     2,
-		AccountID:   randomAWSAccountID(),
+		AccountID:   randomSampleAccountID(),
 		InterfaceID: "eni-123456789123",
 		SrcAddr:     randomIP(),
 		DstAddr:     randomIP(),
