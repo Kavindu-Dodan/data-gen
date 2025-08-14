@@ -84,6 +84,7 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 
 		dataPoints := int64(0)
 		currentPayload := int64(0)
+		start := time.Now()
 		lastBatch := time.Now()
 
 		for {
@@ -137,7 +138,7 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 			}
 
 			// check for max runtime
-			if maxDuration > 0 && time.Since(lastBatch) >= maxDuration {
+			if maxDuration > 0 && time.Since(start) >= maxDuration {
 				// notify input close and exit
 				close(g.inputClose)
 				slog.Info(fmt.Sprintf("Generator shutting down after max runtime of %s", maxDuration))
