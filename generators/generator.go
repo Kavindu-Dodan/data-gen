@@ -108,6 +108,7 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 				if since > batchingDuration || (g.config.MaxSize != 0 && currentSize > int64(g.config.MaxSize)) || (g.config.MaxDataPoints > 0 && dataPoints >= g.config.MaxDataPoints) {
 					b := g.input.GetAndReset()
 					g.dataChan <- &b
+					slog.Debug("Emitted payload", slog.Int64("dataPoints", currentPayload))
 
 					// if batching duration is not elapsed, pause
 					if since < batchingDuration {
@@ -121,7 +122,6 @@ func (g *Generator) Start(delay time.Duration) (data <-chan *[]byte, inputClose 
 
 					// update last batch time
 					lastBatch = time.Now()
-					slog.Debug("Emitted payload", slog.Int64("dataPoints", currentPayload))
 					currentPayload = 0
 				}
 			case <-g.shChan:
