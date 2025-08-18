@@ -11,6 +11,9 @@ Require Go version 1.24+
 - Start the data generator with config file as the only parameter
   `go run cmd/main.go --config ./config.yaml`
 
+> [!TIP]
+> Use `--debug` flag for debug level logs.
+
 ## Configurations
 
 Given below are the supported configuration options.
