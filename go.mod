@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.38.0
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.56.0
-	github.com/aws/aws-sdk-go-v2/service/firehose v1.37.7
+	github.com/aws/aws-sdk-go-v2/service/firehose v1.40.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.0
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.9.0
