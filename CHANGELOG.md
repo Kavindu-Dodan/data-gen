@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.2.0...v0.3.0) (2025-08-22)
+
+
+### Features
+
+* add batching, sizing and refactor outputs ([f4bcb51](https://github.com/Kavindu-Dodan/data-gen/commit/f4bcb518f07b512af6c73763d1cdde1a56b54c3a))
+* add batching, sizing and refactor outputs ([f4bcb51](https://github.com/Kavindu-Dodan/data-gen/commit/f4bcb518f07b512af6c73763d1cdde1a56b54c3a))
+* add batching, sizing and refactor outputs ([f66a1dd](https://github.com/Kavindu-Dodan/data-gen/commit/f66a1dd8a1e0b7521b6e224c76be9b993513eecc))
+* add cloudtrail support ([#27](https://github.com/Kavindu-Dodan/data-gen/issues/27)) ([7af6ee6](https://github.com/Kavindu-Dodan/data-gen/commit/7af6ee6760c68337538b7697d3dcc62e18215403))
+
 ## [0.2.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.1.0...v0.2.0) (2025-08-07)
 
 
