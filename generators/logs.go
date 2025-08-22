@@ -3,7 +3,6 @@ package generators
 import (
 	"fmt"
 
-	"github.com/google/uuid"
 	"go.elastic.co/ecszap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -34,7 +33,7 @@ func NewLogGenerator() *LogGenerator {
 }
 
 func (l *LogGenerator) Generate() (int64, error) {
-	l.logger.Info(fmt.Sprintf("log entry: %s", uuid.NewString()))
+	l.logger.Info(fmt.Sprintf("log entry: %s", randomLogString(100)))
 	err := l.buf.write(l.writer.data)
 
 	return l.buf.size(), err
