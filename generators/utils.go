@@ -19,6 +19,7 @@ var sampleAccountIDs = []string{"123456789012", "987654321098", "111122223333", 
 var samplePrincipalIDs = []string{"AID1234567890", "AID0987654321", "AID1111222233", "AID7777888899"}
 var regions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1"}
 var s3EventNames = []string{"PutObject", "GetObject", "DeleteObject", "ListObjects"}
+var randomPhrases = []string{"some random phrase", "another random phrase", "yet another random phrase", "log on something"}
 
 func iso8601Now() string {
 	return time.Now().UTC().Format("2006-01-02T15:04:05.000000Z")
@@ -152,4 +153,14 @@ func randomBucketName() string {
 
 func randomS3ObjectKey() string {
 	return "object_" + randomAZaz09String(2) + ".txt"
+}
+
+func randomLogString(size int) string {
+	var buildBytes []byte
+	for len(buildBytes) < size {
+		buildBytes = append(buildBytes, []byte(randomPhrases[rand.Intn(len(randomPhrases))])...)
+		buildBytes = append(buildBytes, ' ')
+	}
+
+	return string(buildBytes)
 }
