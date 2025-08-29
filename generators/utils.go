@@ -224,7 +224,7 @@ func randomWafAction() string {
 	return wafActions[rand.Intn(len(wafActions))]
 }
 
-func ramdomWAFACLID() string {
+func randomWAFACLID() string {
 	return fmt.Sprintf("arn:aws:wafv2:%s:%s:regional/webacl/sample-web-acl/%s", randomRegion(), randomSampleAccountID(), uuids[rand.Intn(len(uuids))])
 }
 

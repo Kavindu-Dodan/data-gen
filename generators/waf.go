@@ -12,7 +12,7 @@ type WAFGen struct {
 
 func newWAFGen() *WAFGen {
 	return &WAFGen{
-		wafId: ramdomWAFACLID(),
+		wafId: randomWAFACLID(),
 	}
 }
 
