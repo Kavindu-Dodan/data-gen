@@ -16,7 +16,7 @@ func NewALBGen() *ALBGen {
 
 func (a *ALBGen) Generate() (int64, error) {
 	customizer := albCustomizer{
-		logType:        randomALBType(),
+		logType:        randomSchema(),
 		timestamp:      iso8601Now(),
 		creationTime:   iso8601Now(),
 		clientIPPort:   fmt.Sprintf("%s:%d", randomIP(), randomPort()),

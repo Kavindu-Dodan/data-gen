@@ -13,13 +13,26 @@ const charsCapital = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 var ff = false
 var tt = true
-var albTypes = []string{"http", "https"}
+var schema = []string{"http", "https"}
 var vpcActions = []string{"ACCEPT", "REJECT"}
+var httpMethods = []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
+var queryStrings = []string{"", "a=1&b=2", "user=abc", "id=12345", "page=1", "search=term"}
+var uriPaths = []string{"/", "/home", "/api/resource", "/login"}
+var contentTypes = []string{"text/html", "application/json", "text/plain", "application/xml"}
+var userAgents = []string{
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"}
+var countryCodes = []string{"US", "GB", "DE", "FR", "IN", "CN", "JP", "AU", "CA", "BR"}
+var sampleRuleIDs = []string{"rule-1", "rule-2", "rule-3", "rule-4", "rule-5"}
 var sampleAccountIDs = []string{"123456789012", "987654321098", "111122223333", "444455556666", "777788889999"}
 var samplePrincipalIDs = []string{"AID1234567890", "AID0987654321", "AID1111222233", "AID7777888899"}
 var regions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1"}
 var s3EventNames = []string{"PutObject", "GetObject", "DeleteObject", "ListObjects"}
 var randomPhrases = []string{"some random phrase", "another random phrase", "yet another random phrase", "log on something"}
+var randomFragments = []string{"", "#browser", "#app"}
+var uuids = []string{"550e8400-e29b-41d4-a716-446655440000", "123e4567-e89b-12d3-a456-426614174000", "9b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"}
+var wafActions = []string{"ALLOW", "BLOCK", "COUNT"}
+var wafRuleTypes = []string{"REGULAR", "RATE_BASED", "GROUP"}
+var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
 
 func iso8601Now() string {
 	return time.Now().UTC().Format("2006-01-02T15:04:05.000000Z")
@@ -29,15 +42,15 @@ func unixSeconds() int64 {
 	return time.Now().Unix()
 }
 
-func randomALBType() string {
-	return albTypes[rand.Intn(len(albTypes))]
+func randomSchema() string {
+	return schema[rand.Intn(len(schema))]
 }
 
 func randomVPCAction() string {
 	return vpcActions[rand.Intn(len(vpcActions))]
 }
 
-// randomIP from 72.16.101.0/24
+// randomIP from 172.16.101.0/24
 func randomIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d",
 		172,
@@ -153,6 +166,70 @@ func randomBucketName() string {
 
 func randomS3ObjectKey() string {
 	return "object_" + randomAZaz09String(2) + ".txt"
+}
+
+func randomFragment() string {
+	return randomFragments[rand.Intn(len(randomFragments))]
+}
+
+func randomHTTPMethod() string {
+	return httpMethods[rand.Intn(len(httpMethods))]
+}
+
+func randomQueryString() string {
+	return queryStrings[rand.Intn(len(queryStrings))]
+}
+
+func randomURIPath() string {
+	return uriPaths[rand.Intn(len(uriPaths))]
+}
+
+func randomWafHeaders() []wafHttpHeader {
+	cType := wafHttpHeader{
+		Name:  "Content-Type",
+		Value: contentTypes[rand.Intn(len(contentTypes))],
+	}
+
+	uAgent := wafHttpHeader{
+		Name:  "User-Agent",
+		Value: userAgents[rand.Intn(len(userAgents))],
+	}
+
+	accept := wafHttpHeader{
+		Name:  "Accept",
+		Value: "*/*",
+	}
+
+	keepAlive := wafHttpHeader{
+		Name:  "Connection",
+		Value: "keep-alive",
+	}
+
+	return []wafHttpHeader{cType, uAgent, accept, keepAlive}
+}
+
+func randomWAFRuleId() string {
+	return sampleRuleIDs[rand.Intn(len(sampleRuleIDs))]
+}
+
+func randomCountryCode() string {
+	return countryCodes[rand.Intn(len(countryCodes))]
+}
+
+func randomWafRuleType() string {
+	return wafRuleTypes[rand.Intn(len(wafRuleTypes))]
+}
+
+func randomWafAction() string {
+	return wafActions[rand.Intn(len(wafActions))]
+}
+
+func ramdomWAFACLID() string {
+	return fmt.Sprintf("arn:aws:wafv2:%s:%s:regional/webacl/sample-web-acl/%s", randomRegion(), randomSampleAccountID(), uuids[rand.Intn(len(uuids))])
+}
+
+func randomWafSourceName() string {
+	return wafSampleHTTPSourceNames[rand.Intn(len(wafSampleHTTPSourceNames))]
 }
 
 func randomLogString(size int) string {
