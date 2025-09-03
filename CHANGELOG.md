@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.3.0...v0.4.0) (2025-09-03)
+
+
+### Features
+
+* add support to generate randomized waf logs ([#48](https://github.com/Kavindu-Dodan/data-gen/issues/48)) ([453b5d4](https://github.com/Kavindu-Dodan/data-gen/commit/453b5d41d9a63180fb517d172b3a7a72b4518ecd))
+
+
+### Bug Fixes
+
+* waf id ([#50](https://github.com/Kavindu-Dodan/data-gen/issues/50)) ([3490bfd](https://github.com/Kavindu-Dodan/data-gen/commit/3490bfd8161b6a80fdfdd75a49909652b6afb224))
+
 ## [0.3.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.2.0...v0.3.0) (2025-08-22)
 
 
