@@ -24,7 +24,7 @@ func (w *WAFGen) Generate() (int64, error) {
 		ruleType:        randomWafRuleType(),
 		action:          randomWafAction(),
 		httpSourceName:  randomWafSourceName(),
-		httpSourceID:    randomAZ09String(10), // Note - This does not match with actual ID format
+		httpSourceID:    randomSourceID(), // Note - This does not match with actual ID format
 		httpRequest: wafHttpRequest{
 			ClientIP:    randomIP(),
 			Country:     randomCountryCode(),

@@ -16,6 +16,7 @@ var tt = true
 var schema = []string{"http", "https"}
 var vpcActions = []string{"ACCEPT", "REJECT"}
 var httpMethods = []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
+var httpSourceIDs = []string{"E2A1BCD34FGH56", "E3B2CDE45GHI67", "E4C3DEF56HIJ78", "E5D4EFG67IJK89"}
 var queryStrings = []string{"", "a=1&b=2", "user=abc", "id=12345", "page=1", "search=term"}
 var uriPaths = []string{"/", "/home", "/api/resource", "/login"}
 var contentTypes = []string{"text/html", "application/json", "text/plain", "application/xml"}
@@ -174,6 +175,10 @@ func randomFragment() string {
 
 func randomHTTPMethod() string {
 	return httpMethods[rand.Intn(len(httpMethods))]
+}
+
+func randomSourceID() string {
+	return httpSourceIDs[rand.Intn(len(httpSourceIDs))]
 }
 
 func randomQueryString() string {
