@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/firehose v1.41.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.0
 	github.com/google/uuid v1.6.0
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	go.elastic.co/ecszap v1.0.3
 	go.uber.org/zap v1.27.0
 	gopkg.in/yaml.v3 v3.0.1
