@@ -55,7 +55,7 @@ func randomVPCAction() string {
 // randomIP from 172.16.101.0/24
 func randomIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d",
-		rand.Intn(len(ipPrefix)),
+		ipPrefix[rand.Intn(len(ipPrefix))],
 		1,
 		1,
 		1,
