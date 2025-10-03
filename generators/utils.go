@@ -34,6 +34,7 @@ var uuids = []string{"550e8400-e29b-41d4-a716-446655440000", "123e4567-e89b-12d3
 var wafActions = []string{"ALLOW", "BLOCK", "COUNT"}
 var wafRuleTypes = []string{"REGULAR", "RATE_BASED", "GROUP"}
 var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
+// ipPrefix contains example public IP address prefixes, representing geo-distributed or commonly used public IP ranges.
 var ipPrefix = []int{1, 8, 31, 41, 91, 123, 179, 201, 210, 250}
 
 func iso8601Now() string {
