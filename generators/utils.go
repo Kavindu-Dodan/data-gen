@@ -34,13 +34,14 @@ var uuids = []string{"550e8400-e29b-41d4-a716-446655440000", "123e4567-e89b-12d3
 var wafActions = []string{"ALLOW", "BLOCK", "COUNT"}
 var wafRuleTypes = []string{"REGULAR", "RATE_BASED", "GROUP"}
 var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
+var ipPrefix = []int{1, 8, 31, 41, 91, 123, 179, 201, 210, 250}
 
 func iso8601Now() string {
 	return time.Now().UTC().Format("2006-01-02T15:04:05.000000Z")
 }
 
-func unixSeconds() int64 {
-	return time.Now().Unix()
+func unixSeconds(delay int) int64 {
+	return time.Now().Unix() + int64(delay)
 }
 
 func randomSchema() string {
@@ -54,10 +55,10 @@ func randomVPCAction() string {
 // randomIP from 172.16.101.0/24
 func randomIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d",
-		172,
-		16,
-		101,
-		rand.Intn(256),
+		rand.Intn(len(ipPrefix)),
+		1,
+		1,
+		1,
 	)
 }
 

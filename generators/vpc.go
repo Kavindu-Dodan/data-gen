@@ -38,8 +38,8 @@ func (v *VPCGen) Generate() (int64, error) {
 		Protocol:    6, // TCP
 		Packets:     rand.IntN(100) + 1,
 		Bytes:       rand.IntN(1000) + 1,
-		Start:       unixSeconds(),
-		End:         unixSeconds(),
+		Start:       unixSeconds(0),
+		End:         unixSeconds(1),
 		Action:      randomVPCAction(),
 		LogStatus:   "ok",
 	}
