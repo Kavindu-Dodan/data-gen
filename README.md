@@ -1,6 +1,6 @@
-# Data Generator
+# Synthetic Data Generator
 
-A simple data generator with export capability to various destinations
+A flexible synthetic data generator in Go, designed to produce realistic logs and metrics for testing and development.
 
 ## Quick Start
 
