@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.4.0...v0.5.0) (2025-10-06)
+
+
+### Features
+
+* add NLB log support ([#72](https://github.com/Kavindu-Dodan/data-gen/issues/72)) ([980d073](https://github.com/Kavindu-Dodan/data-gen/commit/980d073bf1c33dc1d074620bd0a18496ababa2d0))
+
 ## [0.4.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.3.0...v0.4.0) (2025-09-03)
 
 
