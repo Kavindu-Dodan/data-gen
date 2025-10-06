@@ -16,7 +16,7 @@ var tt = true
 
 var contentTypes = []string{"text/html", "application/json", "text/plain", "application/xml"}
 var countryCodes = []string{"US", "GB", "DE", "FR", "IN", "CN", "JP", "AU", "CA", "BR"}
-var sampleDomains = []string{"example.com", "test.com", "sample.org", "demo.net"}
+var randomIDs = []string{"id123", "id456", "id789", "id101", "id112", "id131"}
 var httpMethods = []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
 var httpSchema = []string{"http", "https"}
 var httpSourceIDs = []string{"E2A1BCD34FGH56", "E3B2CDE45GHI67", "E4C3DEF56HIJ78", "E5D4EFG67IJK89"}
@@ -26,6 +26,7 @@ var randomPhrases = []string{"some random phrase", "another random phrase", "yet
 var regions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1"}
 var s3EventNames = []string{"PutObject", "GetObject", "DeleteObject", "ListObjects"}
 var sampleAccountIDs = []string{"123456789012", "987654321098", "111122223333", "444455556666", "777788889999"}
+var sampleDomains = []string{"example.com", "test.com", "sample.org", "demo.net"}
 var samplePrincipalIDs = []string{"AID1234567890", "AID0987654321", "AID1111222233", "AID7777888899"}
 var sampleRuleIDs = []string{"rule-1", "rule-2", "rule-3", "rule-4", "rule-5"}
 var sslCiphers = []string{"ECDHE-RSA-AES128-GCM-SHA256", "ECDHE-RSA-AES256-GCM-SHA384", "AES128-GCM-SHA256"}
@@ -38,6 +39,7 @@ var vpcActions = []string{"ACCEPT", "REJECT"}
 var wafActions = []string{"ALLOW", "BLOCK", "COUNT"}
 var wafRuleTypes = []string{"REGULAR", "RATE_BASED", "GROUP"}
 var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
+var certARN = []string{"arn:aws:acm:us-east-1:123456789012:certificate/1", "arn:aws:acm:us-east-1:123456789012:certificate/2", "arn:aws:acm:us-east-1:123456789012:certificate/2"}
 
 // ipPrefix contains example public IP address prefixes, representing geo-distributed or commonly used public IP ranges.
 var ipPrefix = []int{1, 8, 31, 41, 91, 123, 179, 201, 210, 250}
@@ -57,6 +59,14 @@ func unixSeconds(delay int) int64 {
 // randomProcessingTime returns a random float as string between 0.500 and 1.499
 func randomProcessingTime() float32 {
 	return (0.5 + rand.Float32()*1000) / 1000
+}
+
+func randomID() string {
+	return randomIDs[rand.Intn(len(randomIDs))]
+}
+
+func randomCertArn() string {
+	return certARN[rand.Intn(len(certARN))]
 }
 
 func randomStatus() string {
