@@ -26,7 +26,7 @@ func (a *NLBgen) Generate() (int64, error) {
 		tlsHSMs:           rand.Intn(1000),
 		receivedBytes:     randomBytesSize(),
 		sentBytes:         randomBytesSize(),
-		tlsAert:           "-",
+		tlsAlert:          "-",
 		certARN:           randomCertArn(),
 		cipher:            randomSSLCipher(),
 		protocol:          sslProtocol(),
@@ -61,7 +61,7 @@ type nlbCustomizer struct {
 	tlsHSMs           int
 	receivedBytes     int
 	sentBytes         int
-	tlsAert           string
+	tlsAlert          string
 	certARN           string
 	cipher            string
 	protocol          string
@@ -78,7 +78,7 @@ func buildNLBLogLine(input nlbCustomizer) string {
 		"%s %s %s %s %s %s %s %d %d %d %d %s %s %s %s %s %s %s %s %s %s %s\n",
 		"tls", "2.0", input.time, input.name, input.elbID, input.clientIPPort, input.destinationIPPort, input.conMs,
 		input.tlsHSMs, input.receivedBytes, input.sentBytes,
-		input.tlsAert, input.certARN, "-", // Placeholder for future fields
+		input.tlsAlert, input.certARN, "-", // Placeholder for future fields
 		input.cipher, input.protocol, "-", // Placeholder for future fields
 		input.domain,
 		input.feProtocol, input.beProtocol, input.alpnList, input.creationTime,

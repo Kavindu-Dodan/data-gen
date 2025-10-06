@@ -21,7 +21,7 @@ func Test_buildNLB(t *testing.T) {
 			tlsHSMs:           2,
 			receivedBytes:     98,
 			sentBytes:         246,
-			tlsAert:           "-",
+			tlsAlert:          "-",
 			certARN:           "arn:aws:acm:us-east-2:671290407336:certificate/2a108f19-aded-46b0-8493-c63eb1ef4a99",
 			cipher:            "ECDHE-RSA-AES128-SHA",
 			protocol:          "tlsv12",
