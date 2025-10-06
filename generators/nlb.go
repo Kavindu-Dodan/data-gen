@@ -18,7 +18,7 @@ func NewNLBGen() *NLBgen {
 func (a *NLBgen) Generate() (int64, error) {
 	customizer := nlbCustomizer{
 		time:              iso8601Now(),
-		name:              fmt.Sprintf("nlb/my-nlb/%s", randomID()),
+		name:              fmt.Sprintf("net/my-nlb/%s", randomID()),
 		elbID:             randomID(),
 		clientIPPort:      fmt.Sprintf("%s:%d", randomIP(), randomPort()),
 		destinationIPPort: fmt.Sprintf("%s:%d", randomIP(), randomPort()),
