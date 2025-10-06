@@ -2,6 +2,7 @@ package generators
 
 import (
 	"fmt"
+	"math/rand"
 )
 
 type ALBGen struct {
@@ -15,6 +16,8 @@ func NewALBGen() *ALBGen {
 }
 
 func (a *ALBGen) Generate() (int64, error) {
+	accountID := randomSampleAccountID()
+
 	customizer := albCustomizer{
 		logType:        randomSchema(),
 		timestamp:      iso8601Now(),
@@ -22,12 +25,12 @@ func (a *ALBGen) Generate() (int64, error) {
 		clientIPPort:   fmt.Sprintf("%s:%d", randomIP(), randomPort()),
 		targetIPPort:   fmt.Sprintf("%s:%d", randomIP(), randomPort()),
 		targetPortList: fmt.Sprintf("%s:%d", randomIP(), randomPort()),
-		request:        `"GET http://www.example.com:80/ HTTP/1.1"`,
-		elbID:          "appA/loadbalancer/123456789",
-		targetARN:      "arn:aws:elasticloadbalancing:us-east-1:123456789:targetID",
-		traceID:        `"trace=123456789"`,
-		userAgent:      `"curl/7.46.0"`,
-		requestID:      "TID_123456789",
+		request:        fmt.Sprintf("\"GET %s://%s:80/ HTTP/1.1\"", randomSchema(), randomDomain()),
+		elbID:          fmt.Sprintf("appA/loadbalancer/%s", accountID),
+		targetARN:      fmt.Sprintf("arn:aws:elasticloadbalancing:%s:%s:targetID", randomRegion(), accountID),
+		traceID:        fmt.Sprintf("\"trace=%d\"", rand.Intn(1000)),
+		userAgent:      fmt.Sprintf("\"%s\"", userAgents[rand.Intn(len(userAgents))]),
+		requestID:      randomAZ09String(5),
 	}
 
 	err := a.buf.write([]byte(buildALBLogLine(customizer)))
@@ -45,24 +48,14 @@ func (a *ALBGen) GetAndReset() []byte {
 // helpers
 
 const (
-	requestProcessingTimeMs  = "0.000"
-	targetProcessingTimeMs   = "0.001"
-	responseProcessingTimeMs = "0.000"
-	elbStatusCode            = "200"
-	targetStatusCode         = "200"
-	receivedBytes            = "34"
-	sentBytes                = "366"
-	matchedRulePriority      = "0"
-	actionsExecuted          = `"forward"`
-	targetStatusList         = `"200"`
-	sslCipher                = "-"
-	sslProtocol              = "-"
-	domainName               = `"-"`
-	chosenCertArn            = `"-"`
-	redirectURL              = `"-"`
-	errorReason              = `"-"`
-	targetHealthReason       = `"-"`
-	targetHealthDescription  = `"-"`
+	matchedRulePriority     = "0"
+	actionsExecuted         = `"forward"`
+	targetStatusList        = `"200"`
+	chosenCertArn           = `"-"`
+	redirectURL             = `"-"`
+	errorReason             = `"-"`
+	targetHealthReason      = `"-"`
+	targetHealthDescription = `"-"`
 )
 
 type albCustomizer struct {
@@ -82,16 +75,16 @@ type albCustomizer struct {
 
 func buildALBLogLine(input albCustomizer) string {
 	logLine := fmt.Sprintf(
-		"%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+		"%s %s %s %s %s %f %f %f %s %s %d %d %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
 		input.logType, input.timestamp, input.elbID,
 		input.clientIPPort, input.targetIPPort,
-		requestProcessingTimeMs, targetProcessingTimeMs, responseProcessingTimeMs,
-		elbStatusCode, targetStatusCode,
-		receivedBytes, sentBytes,
+		randomProcessingTime(), randomProcessingTime(), randomProcessingTime(),
+		randomStatus(), randomStatus(),
+		randomBytesSize(), randomBytesSize(),
 		input.request, input.userAgent,
-		sslCipher, sslProtocol,
+		randomSSLCipher(), sslProtocol(),
 		input.targetARN, input.traceID,
-		domainName, chosenCertArn,
+		randomDomain(), chosenCertArn,
 		matchedRulePriority, input.creationTime,
 		actionsExecuted, redirectURL, errorReason,
 		input.targetPortList, targetStatusList,
