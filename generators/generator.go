@@ -13,6 +13,7 @@ const (
 	logs       = "LOGS"
 	metrics    = "METRICS"
 	alb        = "ALB"
+	nlb        = "NLB"
 	vpc        = "VPC"
 	waf        = "WAF"
 	CloudTrail = "CLOUDTRAIL"
@@ -33,6 +34,8 @@ func GeneratorFor(config *conf.Config) (*Generator, error) {
 		return newGenerator(config.Input, NewMetricGenerator()), nil
 	case alb:
 		return newGenerator(config.Input, NewALBGen()), nil
+	case nlb:
+		return newGenerator(config.Input, NewNLBGen()), nil
 	case vpc:
 		return newGenerator(config.Input, newVPCGen()), nil
 	case waf:

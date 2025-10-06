@@ -1,6 +1,6 @@
-# Data Generator
+# Synthetic Data Generator
 
-A simple data generator with export capability to various destinations
+A flexible synthetic data generator in Go, designed to produce realistic logs and metrics for testing and development.
 
 ## Quick Start
 
@@ -25,7 +25,7 @@ Given below are supported input types and their related environment variable ove
 
 | YAML Property     | Environment Variable        | Description                                                                                                      |
 |-------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------|
-| `type`            | `ENV_INPUT_TYPE`            | Specifies the input data type (e.g., `LOGS`, `METRICS`, `ALB`, `VPC`, `CLOUDTRAIL`, `WAF`).                      |
+| `type`            | `ENV_INPUT_TYPE`            | Specifies the input data type (e.g., `LOGS`, `METRICS`, `ALB`, `NLB`, `VPC`, `CLOUDTRAIL`, `WAF`).               |
 | `delay`           | `ENV_INPUT_DELAY`           | Delay between a data point. Accepts value in format like `5s` (5 seconds), `10ms` (10 milliseconds).             |
 | `batching`        | `ENV_INPUT_BATCHING`        | Set time delay between data batches. Accepts a time value similar to delay. Default is set to `0` (no batching). |
 | `max_batch_size`  | `ENV_INPUT_MAX_BATCH_SIZE`  | Set maximum byte size of a batch. Default is to ignore (no max size).                                            |
@@ -36,7 +36,8 @@ Note about input `type`,
 
 - `LOGS` : ECS (Elastic Common Schema) formatted logs based on zap
 - `METRICS`: Generate metrics similar to a CloudWatch metrics entry
-- `ALB` : Generate AWS ALB formatted log with some random content
+- `ALB` : Generate AWS ALB formatted logs with some random content
+- `NLB` : Generate AWS NLB formatted logs with some random content
 - `VPC`: Generate AWS VPC formatted logs with randomized content
 - `CLOUDTRAIL`: Generate AWS CloudTrail formatted logs with randomized content. Data is generated for AWS S3 Data Event.
 - `WAF`: Generate AWS WAF formatted logs with randomized content
