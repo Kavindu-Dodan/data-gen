@@ -39,7 +39,7 @@ var vpcActions = []string{"ACCEPT", "REJECT"}
 var wafActions = []string{"ALLOW", "BLOCK", "COUNT"}
 var wafRuleTypes = []string{"REGULAR", "RATE_BASED", "GROUP"}
 var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
-var certARN = []string{"arn:aws:acm:us-east-1:123456789012:certificate/1", "arn:aws:acm:us-east-1:123456789012:certificate/2", "arn:aws:acm:us-east-1:123456789012:certificate/2"}
+var certARN = []string{"arn:aws:acm:us-east-1:123456789012:certificate/1", "arn:aws:acm:us-east-1:123456789012:certificate/2", "arn:aws:acm:us-east-1:123456789012:certificate/3"}
 
 // ipPrefix contains example public IP address prefixes, representing geo-distributed or commonly used public IP ranges.
 var ipPrefix = []int{1, 8, 31, 41, 91, 123, 179, 201, 210, 250}
