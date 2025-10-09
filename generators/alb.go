@@ -32,7 +32,7 @@ func (a *ALBGen) Generate() (int64, error) {
 		requestProcTime:  randomProcessingTime(),
 		responseProcTime: randomProcessingTime(),
 		sentBytes:        randomBytesSize(),
-		sslProtocol:      sslProtocol(),
+		sslProtocol:      randomTLSProtocol(),
 		targetARN:        fmt.Sprintf("arn:aws:elasticloadbalancing:%s:%s:targetID", randomRegion(), accountID),
 		targetIPPort:     fmt.Sprintf("%s:%d", randomIP(), randomPort()),
 		targetPortList:   fmt.Sprintf("%s:%d", randomIP(), randomPort()),

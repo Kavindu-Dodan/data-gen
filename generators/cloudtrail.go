@@ -3,6 +3,7 @@ package generators
 import (
 	"encoding/json"
 	"github.com/google/uuid"
+	"math/rand/v2"
 )
 
 type cloudTrail struct {
@@ -17,9 +18,14 @@ func newCloudTrailGen() *cloudTrail {
 }
 
 func (c *cloudTrail) Generate() (int64, error) {
+	id := randomAZ09String(12)
 	accountID := randomSampleAccountID()
 	s3EventName := randomS3EventName()
 	parameters, resources := generateRequestAndResource(s3EventName, accountID)
+	responseElements := map[string]any{
+		"requestId": id,
+		"kmsKeyId":  "arn:aws:kms:us-east-1:123456789012:key/" + randomAZ09String(1),
+	}
 
 	customizer := cloudTrailCustomizer{
 		awsRegion:          randomRegion(),
@@ -33,13 +39,23 @@ func (c *cloudTrail) Generate() (int64, error) {
 		managementEvent:    &ff,
 		readOnly:           &ff,
 		recipientAccountID: accountID,
-		requestID:          randomAZ09String(12),
+		requestID:          id,
 		requestParameters:  parameters,
 		resources:          []any{resources},
+		responseElements:   responseElements,
 		sharedEventID:      randomAZ09String(16),
 		sourceIPAddress:    randomIP(),
-		userAgent:          s3UserAgent,
+		userAgent:          randomUserAgent(),
 		userIdentity:       ctUserIdentity(),
+		tlsDetails: map[string]any{
+			"tlsVersion":  randomTLSProtocol(),
+			"cipherSuite": randomSSLCipher(),
+		},
+	}
+
+	// 10% chance of error
+	if rand.IntN(10) < 1 {
+		customizer.errorCode, customizer.errorMessage = randomErrorCodeAndMessage()
 	}
 
 	newRecord := cloudTrailRecordFor(customizer)
@@ -66,7 +82,6 @@ func (c *cloudTrail) GetAndReset() []byte {
 const (
 	eventVersion  = "1.11"
 	s3EventSource = "s3.amazonaws.com"
-	s3UserAgent   = "s3.amazonaws.com"
 	eventType     = "AwsApiCall"
 	eventCategory = "Data"
 )
@@ -121,6 +136,7 @@ type cloudTrailRecord struct {
 	SessionCredentialFromConsole string                 `json:"sessionCredentialFromConsole,omitempty"`
 	SharedEventID                string                 `json:"sharedEventID,omitempty"`
 	SourceIPAddress              string                 `json:"sourceIPAddress,omitempty"`
+	TLSDetails                   map[string]any         `json:"tlsDetails"`
 	UserAgent                    string                 `json:"userAgent,omitempty"`
 	UserIdentity                 UserIdentity           `json:"userIdentity"`
 }
@@ -162,6 +178,7 @@ func cloudTrailRecordFor(customizer cloudTrailCustomizer) cloudTrailRecord {
 		ResponseElements:    customizer.responseElements,
 		SharedEventID:       customizer.sharedEventID,
 		SourceIPAddress:     customizer.sourceIPAddress,
+		TLSDetails:          customizer.tlsDetails,
 		UserAgent:           customizer.userAgent,
 		UserIdentity:        customizer.userIdentity,
 	}
