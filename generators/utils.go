@@ -14,14 +14,16 @@ const charsCapital = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 var ff = false
 var tt = true
 
+var certARN = []string{"arn:aws:acm:us-east-1:123456789012:certificate/1", "arn:aws:acm:us-east-1:123456789012:certificate/2", "arn:aws:acm:us-east-1:123456789012:certificate/3"}
 var contentTypes = []string{"text/html", "application/json", "text/plain", "application/xml"}
 var countryCodes = []string{"US", "GB", "DE", "FR", "IN", "CN", "JP", "AU", "CA", "BR"}
-var randomIDs = []string{"id123", "id456", "id789", "id101", "id112", "id131"}
+var errorCodes = []string{"AccessDenied", "ValidationError", "ExpiredToken"}
 var httpMethods = []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
 var httpSchema = []string{"http", "https"}
 var httpSourceIDs = []string{"E2A1BCD34FGH56", "E3B2CDE45GHI67", "E4C3DEF56HIJ78", "E5D4EFG67IJK89"}
 var queryStrings = []string{"", "a=1&b=2", "user=abc", "id=12345", "page=1", "search=term"}
 var randomFragments = []string{"", "#browser", "#app"}
+var randomIDs = []string{"id123", "id456", "id789", "id101", "id112", "id131"}
 var randomPhrases = []string{"some random phrase", "another random phrase", "yet another random phrase", "log on something"}
 var regions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1"}
 var s3EventNames = []string{"PutObject", "GetObject", "DeleteObject", "ListObjects"}
@@ -29,23 +31,33 @@ var sampleAccountIDs = []string{"123456789012", "987654321098", "111122223333", 
 var sampleDomains = []string{"example.com", "test.com", "sample.org", "demo.net"}
 var samplePrincipalIDs = []string{"AID1234567890", "AID0987654321", "AID1111222233", "AID7777888899"}
 var sampleRuleIDs = []string{"rule-1", "rule-2", "rule-3", "rule-4", "rule-5"}
-var sslCiphers = []string{"ECDHE-RSA-AES128-GCM-SHA256", "ECDHE-RSA-AES256-GCM-SHA384", "AES128-GCM-SHA256"}
-var sslProtocols = []string{"TLSv1.2", "TLSv1.3"}
 var statuses = []string{"200", "400", "500"}
+var tlsCiphers = []string{"ECDHE-RSA-AES128-GCM-SHA256", "ECDHE-RSA-AES256-GCM-SHA384", "AES128-GCM-SHA256"}
+var tlsProtocols = []string{"TLSv1.2", "TLSv1.3"}
 var uriPaths = []string{"/", "/home", "/api/resource", "/login"}
-var userAgents = []string{"Mozilla/5.0, AppleWebKit/537.36, Chrome/58.0.3029.110, Safari/537.3", "curl/7.46.0"}
+var userAgents = []string{"Mozilla/5.0, AppleWebKit/537.36, Chrome/58.0.3029.110, Safari/537.3", "curl/7.46.0", "cloudtrail.amazonaws.com", "firehose.amazonaws.com"}
 var uuids = []string{"550e8400-e29b-41d4-a716-446655440000", "123e4567-e89b-12d3-a456-426614174000", "9b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"}
 var vpcActions = []string{"ACCEPT", "REJECT"}
 var wafActions = []string{"ALLOW", "BLOCK", "COUNT"}
 var wafRuleTypes = []string{"REGULAR", "RATE_BASED", "GROUP"}
 var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
-var certARN = []string{"arn:aws:acm:us-east-1:123456789012:certificate/1", "arn:aws:acm:us-east-1:123456789012:certificate/2", "arn:aws:acm:us-east-1:123456789012:certificate/3"}
+
+var errorCodeMessageCombo = map[string]string{
+	"AccessDenied":    "User is not authorized to perform iam:CreateUser on resource",
+	"ValidationError": "Template format error: Unrecognized resource types",
+	"ExpiredToken":    "The security token included in the request is expired",
+}
 
 // ipPrefix contains example public IP address prefixes, representing geo-distributed or commonly used public IP ranges.
 var ipPrefix = []int{1, 8, 31, 41, 91, 123, 179, 201, 210, 250}
 
 func randomDomain() string {
 	return sampleDomains[rand.Intn(len(sampleDomains))]
+}
+
+func randomErrorCodeAndMessage() (string, string) {
+	code := errorCodes[rand.Intn(len(errorCodes))]
+	return code, errorCodeMessageCombo[code]
 }
 
 func iso8601Now() string {
@@ -81,12 +93,12 @@ func randomSchema() string {
 	return httpSchema[rand.Intn(len(httpSchema))]
 }
 
-func sslProtocol() string {
-	return sslProtocols[rand.Intn(len(sslProtocols))]
+func randomTLSProtocol() string {
+	return tlsProtocols[rand.Intn(len(tlsProtocols))]
 }
 
 func randomSSLCipher() string {
-	return sslCiphers[rand.Intn(len(sslCiphers))]
+	return tlsCiphers[rand.Intn(len(tlsCiphers))]
 }
 
 func randomVPCAction() string {
@@ -109,6 +121,11 @@ func randomPort() int {
 
 func ctUserIdentity() UserIdentity {
 	userName := fmt.Sprintf("user%d", rand.Intn(10))
+
+	if rand.Intn(10) == 0 {
+		userName = fmt.Sprintf("%s@email.com", userName)
+	}
+
 	accountID := randomSampleAccountID()
 
 	arn := randomIAMArn(accountID, userName)
@@ -155,6 +172,10 @@ func randomS3EventName() string {
 	return s3EventNames[rand.Intn(len(s3EventNames))]
 }
 
+func randomUserAgent() string {
+	return userAgents[rand.Intn(len(userAgents))]
+}
+
 func generateRequestAndResource(eventName string, accID string) (map[string]any, map[string]any) {
 	bucket := randomBucketName()
 	s3ObjectKey := randomS3ObjectKey()
@@ -165,6 +186,8 @@ func generateRequestAndResource(eventName string, accID string) (map[string]any,
 		request := map[string]any{
 			"bucketName": bucket,
 			"key":        s3ObjectKey,
+			"userName":   fmt.Sprintf("user-%s", randomID()),
+			"groupName":  fmt.Sprintf("group-%s", randomID()),
 		}
 
 		resource := map[string]any{
@@ -178,6 +201,8 @@ func generateRequestAndResource(eventName string, accID string) (map[string]any,
 		request := map[string]any{
 			"bucketName": bucket,
 			"maxKeys":    1000,
+			"userName":   fmt.Sprintf("user-%s", randomID()),
+			"groupName":  fmt.Sprintf("group-%s", randomID()),
 		}
 
 		resource := map[string]any{

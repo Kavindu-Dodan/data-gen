@@ -29,7 +29,7 @@ func (a *NLBgen) Generate() (int64, error) {
 		tlsAlert:          "-",
 		certARN:           randomCertArn(),
 		cipher:            randomSSLCipher(),
-		protocol:          sslProtocol(),
+		protocol:          randomTLSProtocol(),
 		domain:            randomDomain(),
 		feProtocol:        "-",
 		beProtocol:        "-",
