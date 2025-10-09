@@ -44,7 +44,8 @@ var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
 
 var errorCodeMessageCombo = map[string]string{
 	"AccessDenied":    "User is not authorized to perform iam:CreateUser on resource",
-	"ValidationError": "Template format error: Unrecognized resource types", "ExpiredToken": "The security token included in the request is expired",
+	"ValidationError": "Template format error: Unrecognized resource types",
+	"ExpiredToken":    "The security token included in the request is expired",
 }
 
 // ipPrefix contains example public IP address prefixes, representing geo-distributed or commonly used public IP ranges.
