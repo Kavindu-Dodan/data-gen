@@ -4,9 +4,9 @@ A flexible synthetic data generator in Go, designed to produce realistic logs an
 
 ## Quick Start
 
-Require Go version 1.24+
+Requires Go version 1.24+
 
-- Clone the repository (alternatively download a latest release)
+- Clone the repository (alternatively download the latest release)
 - Copy `config.sample.yaml` and edit as needed.
 - Start the data generator with config file as the only parameter
   `go run cmd/main.go --config ./config.yaml`
@@ -98,7 +98,7 @@ output:
   config:
     s3_bucket: "testing-bucket"
     compression: gzip
-    path_refix: "datagen"
+    path_prefix: "datagen"
 ```
 
 #### FIREHOSE
