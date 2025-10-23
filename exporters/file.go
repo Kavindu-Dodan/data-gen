@@ -9,12 +9,14 @@ import (
 
 const defaultLocation = "./out"
 
+// FileExporter writes generated data to local files with incremental naming.
 type FileExporter struct {
 	cfg    *fileCfg
 	entry  int
 	shChan chan struct{}
 }
 
+// fileCfg specifies the file output location.
 type fileCfg struct {
 	Location string `yaml:"location"`
 }

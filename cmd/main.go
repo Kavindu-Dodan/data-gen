@@ -30,7 +30,7 @@ func main() {
 
 	configurations, err := conf.NewConfig(b)
 	if err != nil {
-		slog.Error(fmt.Sprintf("Config file parsomg error: %s", err.Error()))
+		slog.Error(fmt.Sprintf("Config file parsing error: %s", err.Error()))
 		return
 	}
 

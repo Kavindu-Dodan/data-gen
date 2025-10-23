@@ -47,6 +47,7 @@ func GeneratorFor(config *conf.Config) (*Generator, error) {
 	return nil, fmt.Errorf("unknown generator type: %s", config.Input.Type)
 }
 
+// Generator orchestrates data generation with batching, timing, and lifecycle management.
 type Generator struct {
 	config     conf.InputConfig
 	input      input
@@ -160,7 +161,7 @@ func (g *Generator) Stop() {
 	close(g.shChan)
 }
 
-// trackedBuffer is a helper to track the size of the buffer
+// trackedBuffer wraps a buffer and tracks its size to enable batch size limits.
 type trackedBuffer struct {
 	buf bytes.Buffer
 	len int64

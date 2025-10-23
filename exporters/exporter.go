@@ -43,6 +43,7 @@ func ExporterFor(ctx context.Context, config *conf.Config) (*Exporter, error) {
 	return nil, fmt.Errorf("unknown output type: %s", config.Output.Type)
 }
 
+// Exporter manages the lifecycle of sending generated data to configured outputs.
 type Exporter struct {
 	output     output
 	inputClose <-chan interface{}

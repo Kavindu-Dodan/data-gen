@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 )
 
+// cloudTrail generates AWS CloudTrail logs for S3 data events.
 type cloudTrail struct {
 	current     []cloudTrailRecord
 	currentSize int64
@@ -86,6 +87,7 @@ const (
 	eventCategory = "Data"
 )
 
+// cloudTrailCustomizer holds parameters for generating a CloudTrail log record.
 type cloudTrailCustomizer struct {
 	AdditionalEventData map[string]any
 	awsRegion           string
@@ -113,6 +115,7 @@ type cloudTrailCustomizer struct {
 	userIdentity        UserIdentity
 }
 
+// cloudTrailRecord represents a single CloudTrail event record.
 type cloudTrailRecord struct {
 	AdditionalEventData          map[string]interface{} `json:"additionalEventData,omitempty"`
 	AwsRegion                    string                 `json:"awsRegion,omitempty"`
@@ -141,6 +144,7 @@ type cloudTrailRecord struct {
 	UserIdentity                 UserIdentity           `json:"userIdentity"`
 }
 
+// UserIdentity identifies the AWS principal that made the API call.
 type UserIdentity struct {
 	Type        string `json:"type,omitempty"`
 	PrincipalID string `json:"principalId,omitempty"`
@@ -151,6 +155,7 @@ type UserIdentity struct {
 	InvokedBy   string `json:"invokedBy,omitempty"`
 }
 
+// cloudTrailLog wraps CloudTrail records in the standard log format.
 type cloudTrailLog struct {
 	Records []cloudTrailRecord `json:"Records"`
 }

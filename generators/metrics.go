@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// MetricGenerator generates CloudWatch-style metrics with randomized values.
 type MetricGenerator struct {
 	buf    trackedBuffer
 	shChan chan struct{}
@@ -61,6 +62,7 @@ func (m *MetricGenerator) makeNewMetricsEntry() ([]byte, error) {
 	return append(marshal, []byte("\n")...), nil
 }
 
+// metricStruct represents a CloudWatch metric with metadata and statistical values.
 type metricStruct struct {
 	MetricStreamName string     `json:"metric_stream_name"`
 	AccountId        string     `json:"account_id"`
@@ -73,6 +75,7 @@ type metricStruct struct {
 	Unit             string     `json:"unit"`
 }
 
+// value holds statistical aggregates for a metric.
 type value struct {
 	Count int `json:"count"`
 	Sum   int `json:"sum"`
@@ -80,6 +83,7 @@ type value struct {
 	Min   int `json:"min"`
 }
 
+// dimensions identifies the resource being monitored.
 type dimensions struct {
 	InstanceId string `json:"InstanceId"`
 }
