@@ -5,6 +5,7 @@ import (
 	"math/rand"
 )
 
+// NLBgen generates AWS Network Load Balancer TLS logs in standard format.
 type NLBgen struct {
 	buf trackedBuffer
 }
@@ -51,6 +52,7 @@ func (a *NLBgen) GetAndReset() []byte {
 
 // helpers
 
+// nlbCustomizer holds all fields needed to construct an NLB TLS log entry.
 type nlbCustomizer struct {
 	time              string
 	name              string

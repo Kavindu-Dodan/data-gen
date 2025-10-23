@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// WAFGen generates AWS WAF logs in JSON format.
 type WAFGen struct {
 	wafId string
 	buf   trackedBuffer
@@ -61,6 +62,7 @@ func (w *WAFGen) GetAndReset() []byte {
 	return w.buf.getAndReset()
 }
 
+// wafCustomizer holds parameters for generating a WAF log entry.
 type wafCustomizer struct {
 	timeStampMillis int64
 	webACLID        string
@@ -73,6 +75,7 @@ type wafCustomizer struct {
 	responseCode    *int
 }
 
+// wafHttpRequest contains HTTP request details captured by WAF.
 type wafHttpRequest struct {
 	ClientIP    string          `json:"clientIp"`
 	Country     string          `json:"country"`
@@ -87,12 +90,14 @@ type wafHttpRequest struct {
 	Host        string          `json:"host"`
 }
 
+// wafHttpHeader represents an HTTP header name-value pair.
 type wafHttpHeader struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
-// credits - https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/extension/encoding/awslogsencodingextension/internal/unmarshaler/waf/unmarshaler.go
+// wafLog represents the complete WAF log structure.
+// Credits: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/extension/encoding/awslogsencodingextension/internal/unmarshaler/waf/unmarshaler.go
 type wafLog struct {
 	Timestamp           int64          `json:"timestamp"`
 	WebACLID            string         `json:"webaclId"`

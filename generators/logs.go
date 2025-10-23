@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// LogGenerator generate logs in Elastic log format based on ZAP
+// LogGenerator generates logs in Elastic Common Schema (ECS) format using Zap logger.
 type LogGenerator struct {
 	buf    trackedBuffer
 	logger *zap.Logger
@@ -43,7 +43,7 @@ func (l *LogGenerator) GetAndReset() []byte {
 	return l.buf.getAndReset()
 }
 
-// writer helps to extract logs and emit through com chan
+// writer captures Zap logger output for buffering and emission.
 type writer struct {
 	data []byte
 }

@@ -7,6 +7,7 @@ import (
 
 const header = "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
 
+// VPCGen generates AWS VPC Flow Logs with header initialization.
 type VPCGen struct {
 	buf  trackedBuffer
 	init bool
@@ -54,6 +55,7 @@ func (v *VPCGen) GetAndReset() []byte {
 	return v.buf.getAndReset()
 }
 
+// vpcCustomizer holds all fields needed to construct a VPC Flow Log entry.
 type vpcCustomizer struct {
 	Version     int
 	AccountID   string

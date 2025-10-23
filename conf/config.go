@@ -35,6 +35,7 @@ const (
 	EnvAWSProfile = "AWS_PROFILE"
 )
 
+// Config holds the complete configuration for the data generator including input, output, and AWS settings.
 type Config struct {
 	Input  InputConfig  `yaml:"input"`
 	Output OutputConfig `yaml:"output"`
@@ -58,6 +59,7 @@ func (cfg *Config) Print() string {
 	return strings.TrimSpace(sb.String())
 }
 
+// InputConfig defines the data generation behavior including type, timing, and limits.
 type InputConfig struct {
 	Type          string    `yaml:"type"`
 	Conf          yaml.Node `yaml:"config"`
@@ -89,6 +91,7 @@ func (cfg *InputConfig) Print() string {
 	return sb.String()
 }
 
+// OutputConfig specifies where and how to export generated data.
 type OutputConfig struct {
 	Type string    `yaml:"type"`
 	Conf yaml.Node `yaml:"config"`
@@ -98,6 +101,7 @@ func (cfg *OutputConfig) Print() string {
 	return fmt.Sprintf("Type: %s", cfg.Type)
 }
 
+// AWSCfg contains AWS-specific configuration for credential profile and region.
 type AWSCfg struct {
 	Profile string `yaml:"profile"`
 	Region  string `yaml:"region"`

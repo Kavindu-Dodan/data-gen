@@ -12,12 +12,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/firehose/types"
 )
 
+// FirehoseExporter sends generated data to AWS Kinesis Data Firehose.
 type FirehoseExporter struct {
 	cfg    firehoseCfg
 	client *firehose.Client
 	shChan chan struct{}
 }
 
+// firehoseCfg specifies the Firehose delivery stream name.
 type firehoseCfg struct {
 	StreamName string `yaml:"stream_name"`
 }

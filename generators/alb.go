@@ -5,6 +5,7 @@ import (
 	"math/rand"
 )
 
+// ALBGen generates AWS Application Load Balancer access logs in standard format.
 type ALBGen struct {
 	buf trackedBuffer
 }
@@ -68,6 +69,7 @@ const (
 	targetHealthDescription = `"-"`
 )
 
+// albCustomizer holds all fields needed to construct an ALB log entry.
 type albCustomizer struct {
 	cipher           string
 	clientIPPort     string

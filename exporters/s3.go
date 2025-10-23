@@ -20,12 +20,14 @@ const (
 	arnPrefix           = "arn:aws:s3:::"
 )
 
+// S3BucketExporter uploads generated data to AWS S3 with optional gzip compression.
 type S3BucketExporter struct {
 	cfg    s3Config
 	client *awss3.Client
 	shChan chan struct{}
 }
 
+// s3Config defines S3 bucket, path, and compression settings.
 type s3Config struct {
 	Bucket      string `yaml:"s3_bucket"`
 	PathPrefix  string `yaml:"path_prefix"`

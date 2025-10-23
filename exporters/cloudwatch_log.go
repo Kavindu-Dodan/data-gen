@@ -14,12 +14,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 )
 
+// CloudWatchExporter sends generated data to AWS CloudWatch Logs.
 type CloudWatchExporter struct {
 	cfg              cwLogCfg
 	cloudwatchClient *cloudwatchlogs.Client
 	shChan           chan struct{}
 }
 
+// cwLogCfg specifies the CloudWatch log group and stream names.
 type cwLogCfg struct {
 	LogGroupName  string `yaml:"log_group"`
 	LogStreamName string `yaml:"log_stream"`
