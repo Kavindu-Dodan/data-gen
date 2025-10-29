@@ -1,7 +1,7 @@
 # config.yaml - full example for Data Generator
 
 input:
-  type: LOGS              # Input type: LOGS, METRICS, ALB, or VPC
+  type: LOGS              # Input type: LOGS, METRICS, ALB, NLB, VPC, CLOUDTRAIL, or WAF
   delay: 500ms            # Delay between each data point (e.g., 500ms)
   batching: 10s           # Emit generated data batched within 10 seconds
   max_batch_size: 10000   # Max batch size in bytes (e.g., 10,000 bytes)
