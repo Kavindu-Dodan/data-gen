@@ -18,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@faf52423ec0d44c58f68e83b614bfcd99dded66f
         with:
-          go-version: '1.24'
+          go-version: '1.25'
 
       - name: Run tests
         run: make test
