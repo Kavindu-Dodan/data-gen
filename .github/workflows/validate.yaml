@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@faf52423ec0d44c58f68e83b614bfcd99dded66f
