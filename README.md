@@ -27,7 +27,7 @@ Given below are supported input types and their related environment variable ove
 |-------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------|
 | `type`            | `ENV_INPUT_TYPE`            | Specifies the input data type (e.g., `LOGS`, `METRICS`, `ALB`, `NLB`, `VPC`, `CLOUDTRAIL`, `WAF`).               |
 | `delay`           | `ENV_INPUT_DELAY`           | Delay between a data point. Accepts value in format like `5s` (5 seconds), `10ms` (10 milliseconds).             |
-| `batching`        | `ENV_INPUT_BATCHING`        | Set time delay between data batches. Accepts a time value similar to delay. Default is set to `0` (no batching). |
+| `batching`        | `ENV_INPUT_BATCHING`        | Set time delay between data batches. Accepts a time value similar to delay. Default is set to `0` (no batching). Note: Batching is most effective with bulk ingest endpoints like S3 and Firehose. For CloudWatch Logs, batching may not be suitable as it concatenates multiple log entries into single messages. |
 | `max_batch_size`  | `ENV_INPUT_MAX_BATCH_SIZE`  | Set maximum byte size of a batch. Default is to ignore (no max size).                                            |
 | `max_data_points` | `ENV_INPUT_MAX_DATA_POINTS` | Set maximum amount of data points to generate. Default is to ignore (no max limit).                              |
 | `max_runtime`     | `ENV_INPUT_MAX_RUNTIME`     | Set maximum duration load generator will run. Default is to ignore (no max limit).                               |
@@ -132,6 +132,9 @@ output:
     logGroup: "MyGroup"
     logStream: "data"
 ```
+
+> [!NOTE]
+> CloudWatch Logs API (`PutLogEvents`) is optimized for single log messages per API call. When batching is enabled, multiple log entries are concatenated into a single message, which may not be ideal for log analysis and searching in CloudWatch. For CloudWatch destinations, consider setting `batching: 0s` (no batching) or using a small delay without batching. Batching is more suitable for bulk ingest endpoints like S3 and Firehose.
 
 ### CSP configurations
 
