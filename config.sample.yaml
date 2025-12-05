@@ -3,7 +3,7 @@
 input:
   type: LOGS              # Input type: LOGS, METRICS, ALB, NLB, VPC, CLOUDTRAIL, or WAF
   delay: 500ms            # Delay between each data point (e.g., 500ms)
-  batching: 10s           # Emit generated data batched within 10 seconds
+  batching: 10s           # Emit generated data batched within 10 seconds (effective for S3, Firehose; consider 0s for CloudWatch)
   max_batch_size: 10000   # Max batch size in bytes (e.g., 10,000 bytes)
   max_data_points: 10000  # Max data points to emit after which program exits (e.g., 10000 data points)
   max_runtime: 1h         # Max runtime for the program (e.g., 1 hour)
@@ -28,6 +28,9 @@ output:
 #   stream_name: "my-firehose-stream"  # Firehose stream name (required)
 
 # CLOUDWATCH_LOG output example
+# Note: CloudWatch Logs API favors single messages per call. When batching is enabled,
+# multiple log entries are concatenated into one message. Consider disabling batching
+# (batching: 0s) for CloudWatch. Batching is more suitable for S3 and Firehose.
 # type: CLOUDWATCH_LOG
 # config:
 #   log_group: "MyGroup"          # CloudWatch log group name
