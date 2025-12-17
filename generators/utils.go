@@ -312,3 +312,144 @@ func randomLogString(size int) string {
 
 	return string(buildBytes)
 }
+
+// Azure-specific randomizers
+
+var azureRegions = []string{"eastus", "westus", "centralus", "northeurope", "westeurope", "southeastasia", "japaneast", "australiaeast"}
+var azureCategories = []string{"Administrative", "Security", "ServiceHealth", "ResourceHealth", "Alert", "Recommendation", "Policy", "StorageRead", "StorageWrite", "StorageDelete"}
+var azureResultTypes = []string{"Success", "Failure", "Start", "Accept"}
+var azureLogLevels = []string{"Informational", "Warning", "Error", "Critical"}
+var azureErrorCodes = []string{"Forbidden", "Unauthorized", "BadRequest", "NotFound", "Conflict", "InternalServerError"}
+var azureErrorDescriptions = []string{
+	"The client does not have authorization to perform action",
+	"Resource not found",
+	"Invalid request parameters",
+	"Authentication failed",
+	"Resource already exists",
+	"Internal server error occurred",
+}
+var azureResourceTypes = []string{
+	"Microsoft.Storage/storageAccounts",
+	"Microsoft.Compute/virtualMachines",
+	"Microsoft.Network/networkSecurityGroups",
+	"Microsoft.KeyVault/vaults",
+	"Microsoft.Web/sites",
+	"Microsoft.Sql/servers",
+}
+var azureActions = []string{"Microsoft.Storage/storageAccounts/write", "Microsoft.Storage/storageAccounts/read", "Microsoft.Compute/virtualMachines/start/action", "Microsoft.Network/networkSecurityGroups/securityRules/write"}
+var azureRoles = []string{"Owner", "Contributor", "Reader", "Storage Blob Data Contributor", "Virtual Machine Contributor"}
+var azureSecurityEventTypes = []string{"NetworkSecurityGroupRuleCounter", "NetworkSecurityGroupFlowEvent", "MaliciousFlow", "UnusualPortActivity"}
+var azureProtocols = []string{"TCP", "UDP", "ICMP"}
+var azureDirections = []string{"Inbound", "Outbound"}
+var azureIncidentTypes = []string{"ServiceIssue", "PlannedMaintenance", "HealthAdvisory", "SecurityAdvisory"}
+var azureHealthStatuses = []string{"Available", "Unavailable", "Degraded", "Unknown"}
+var azureHealthCauses = []string{"PlatformInitiated", "UserInitiated", "Unknown"}
+
+func randomAzureRegion() string {
+	return azureRegions[rand.Intn(len(azureRegions))]
+}
+
+func randomAzureCategory() string {
+	return azureCategories[rand.Intn(len(azureCategories))]
+}
+
+func randomAzureResultType() string {
+	return azureResultTypes[rand.Intn(len(azureResultTypes))]
+}
+
+func randomAzureLogLevel() string {
+	return azureLogLevels[rand.Intn(len(azureLogLevels))]
+}
+
+func randomAzureErrorCode() string {
+	return azureErrorCodes[rand.Intn(len(azureErrorCodes))]
+}
+
+func randomAzureErrorDescription() string {
+	return azureErrorDescriptions[rand.Intn(len(azureErrorDescriptions))]
+}
+
+func randomAzureResourceID() string {
+	subscriptionID := randomAzureGUID()
+	resourceGroup := fmt.Sprintf("rg-%s", randomAZaz09String(8))
+	resourceType := azureResourceTypes[rand.Intn(len(azureResourceTypes))]
+	resourceName := fmt.Sprintf("resource-%s", randomAZaz09String(6))
+
+	return fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/%s/%s",
+		subscriptionID, resourceGroup, resourceType, resourceName)
+}
+
+func randomAzureGUID() string {
+	return fmt.Sprintf("%s-%s-%s-%s-%s",
+		randomAZaz09String(8),
+		randomAZaz09String(4),
+		randomAZaz09String(4),
+		randomAZaz09String(4),
+		randomAZaz09String(12))
+}
+
+func randomDurationMs() int {
+	return rand.Intn(5000-10) + 10
+}
+
+func randomAzureOperationName(category string) string {
+	switch category {
+	case "Administrative":
+		return azureActions[rand.Intn(len(azureActions))]
+	case "Security":
+		return "Microsoft.Network/networkSecurityGroups/securityRules/action"
+	case "StorageRead":
+		return "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+	case "StorageWrite":
+		return "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+	case "StorageDelete":
+		return "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete"
+	default:
+		return azureActions[rand.Intn(len(azureActions))]
+	}
+}
+
+func randomAzureAction() string {
+	return azureActions[rand.Intn(len(azureActions))]
+}
+
+func randomAzureRole() string {
+	return azureRoles[rand.Intn(len(azureRoles))]
+}
+
+func randomAzureSecurityEventType() string {
+	return azureSecurityEventTypes[rand.Intn(len(azureSecurityEventTypes))]
+}
+
+func randomAzureProtocol() string {
+	return azureProtocols[rand.Intn(len(azureProtocols))]
+}
+
+func randomAzureDirection() string {
+	return azureDirections[rand.Intn(len(azureDirections))]
+}
+
+func randomAzureIncidentType() string {
+	return azureIncidentTypes[rand.Intn(len(azureIncidentTypes))]
+}
+
+func randomAzureHealthStatus() string {
+	return azureHealthStatuses[rand.Intn(len(azureHealthStatuses))]
+}
+
+func randomAzureHealthCause() string {
+	return azureHealthCauses[rand.Intn(len(azureHealthCauses))]
+}
+
+func randomAzureStorageAccount() string {
+	return fmt.Sprintf("storage%s", randomAZaz09String(8))
+}
+
+func randomBlobPath() string {
+	return fmt.Sprintf("container-%s/blob-%s.txt", randomAZaz09String(4), randomAZaz09String(6))
+}
+
+func randomHTTPStatusCode() int {
+	codes := []int{200, 201, 204, 400, 401, 403, 404, 500, 503}
+	return codes[rand.Intn(len(codes))]
+}

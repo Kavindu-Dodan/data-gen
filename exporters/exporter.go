@@ -38,6 +38,18 @@ func ExporterFor(ctx context.Context, config *conf.Config) (*Exporter, error) {
 			return nil, err
 		}
 		return newExporter(exporter), nil
+	case "EVENTHUB":
+		exporter, err := newEventHubExporter(ctx, config)
+		if err != nil {
+			return nil, err
+		}
+		return newExporter(exporter), nil
+	case "DEBUG":
+		exporter, err := newDebugExporter(config)
+		if err != nil {
+			return nil, err
+		}
+		return newExporter(exporter), nil
 	}
 
 	return nil, fmt.Errorf("unknown output type: %s", config.Output.Type)
