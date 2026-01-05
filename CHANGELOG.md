@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.5.0...v0.6.0) (2026-01-05)
+
+
+### Features
+
+* Add azlogs generator and event hub exporter ([#95](https://github.com/Kavindu-Dodan/data-gen/issues/95)) ([60c6aa0](https://github.com/Kavindu-Dodan/data-gen/commit/60c6aa09e9568be8fcbf01fce68b1e08d0d8b587))
+
 ## [0.5.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.4.0...v0.5.0) (2025-10-06)
 
 
