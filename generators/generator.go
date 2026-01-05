@@ -10,13 +10,14 @@ import (
 )
 
 const (
-	logs       = "LOGS"
-	metrics    = "METRICS"
-	alb        = "ALB"
-	nlb        = "NLB"
-	vpc        = "VPC"
-	waf        = "WAF"
-	CloudTrail = "CLOUDTRAIL"
+	logs              = "LOGS"
+	metrics           = "METRICS"
+	alb               = "ALB"
+	nlb               = "NLB"
+	vpc               = "VPC"
+	waf               = "WAF"
+	CloudTrail        = "CLOUDTRAIL"
+	azureResourceLogs = "AZURE_RESOURCE_LOGS"
 )
 
 type input interface {
@@ -42,6 +43,8 @@ func GeneratorFor(config *conf.Config) (*Generator, error) {
 		return newGenerator(config.Input, newWAFGen()), nil
 	case CloudTrail:
 		return newGenerator(config.Input, newCloudTrailGen()), nil
+	case azureResourceLogs:
+		return newGenerator(config.Input, newAzureResourceLogGen(config.Input)), nil
 	}
 
 	return nil, fmt.Errorf("unknown generator type: %s", config.Input.Type)
