@@ -2,10 +2,11 @@ package conf
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"os"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -22,14 +23,15 @@ const (
 	EnvInputMaxDataPoints = "ENV_INPUT_MAX_DATA_POINTS"
 	EnvMaxRuntime         = "ENV_INPUT_MAX_RUNTIME"
 
-	EnvOutType                     = "ENV_OUT_TYPE"
-	EnvOutLocation                 = "ENV_OUT_LOCATION"
-	EnvOutCompression              = "ENV_OUT_COMPRESSION"
-	EnvOutS3Bucket                 = "ENV_OUT_S3_BUCKET"
-	EnvOutPathPrefix               = "ENV_OUT_PATH_PREFIX"
-	EnvOutStreamName               = "ENV_OUT_STREAM_NAME"
-	EnvOutLogGroup                 = "ENV_OUT_LOG_GROUP"
-	EnvOutLogStream                = "ENV_OUT_LOG_STREAM"
+	EnvOutType        = "ENV_OUT_TYPE"
+	EnvOutLocation    = "ENV_OUT_LOCATION"
+	EnvOutCompression = "ENV_OUT_COMPRESSION"
+	EnvOutS3Bucket    = "ENV_OUT_S3_BUCKET"
+	EnvOutPathPrefix  = "ENV_OUT_PATH_PREFIX"
+	EnvOutStreamName  = "ENV_OUT_STREAM_NAME"
+	EnvOutLogGroup    = "ENV_OUT_LOG_GROUP"
+	EnvOutLogStream   = "ENV_OUT_LOG_STREAM"
+
 	EnvOutEventHubNamespace        = "ENV_OUT_EVENTHUB_NAMESPACE"
 	EnvOutEventHubName             = "ENV_OUT_EVENTHUB_NAME"
 	EnvOutEventHubConnectionString = "ENV_OUT_EVENTHUB_CONNECTION_STRING"
@@ -55,11 +57,35 @@ func newDefaultConfig() *Config {
 func (cfg *Config) Print() string {
 	sb := strings.Builder{}
 
-	sb.WriteString(fmt.Sprintf("[ Input - %s ", cfg.Input.Print()))
-	sb.WriteString(fmt.Sprintf("Output - %s ", cfg.Output.Print()))
-	sb.WriteString(fmt.Sprintf("AWS - %s ]", cfg.AWSCfg.Print()))
+	sb.WriteString("  Input:\n")
+	sb.WriteString("    " + cfg.Input.Print() + "\n")
+	sb.WriteString("  Output:\n")
+	sb.WriteString("    " + cfg.Output.Print())
 
-	return strings.TrimSpace(sb.String())
+	// Only include AWS config if output type uses AWS
+	if cfg.usesAWS() {
+		sb.WriteString("\n  AWS:\n")
+		sb.WriteString("    " + cfg.AWSCfg.Print())
+	}
+
+	return sb.String()
+}
+
+// usesAWS returns true if the output type or input type requires AWS configuration
+func (cfg *Config) usesAWS() bool {
+	// Check if output type requires AWS
+	switch cfg.Output.Type {
+	case "S3", "FIREHOSE", "CLOUDWATCH_LOG":
+		return true
+	}
+
+	// Check if input type is AWS-specific (may need AWS config for region/profile context)
+	switch cfg.Input.Type {
+	case "ALB", "NLB", "VPC", "WAF", "CLOUDTRAIL":
+		return true
+	}
+
+	return false
 }
 
 // InputConfig defines the data generation behavior including type, timing, and limits.
@@ -84,12 +110,22 @@ func newDefaultInputConfig() *InputConfig {
 func (cfg *InputConfig) Print() string {
 	sb := strings.Builder{}
 
-	sb.WriteString(fmt.Sprintf("Type: %s, ", cfg.Type))
-	sb.WriteString(fmt.Sprintf("Delay: %s ", cfg.Delay))
-	sb.WriteString(fmt.Sprintf("Batching: %s ", cfg.Batching))
-	sb.WriteString(fmt.Sprintf("Max Batch Bytes: %d ", cfg.MaxSize))
-	sb.WriteString(fmt.Sprintf("Max Data points: %d ", cfg.MaxDataPoints))
-	sb.WriteString(fmt.Sprintf("Max Runtime: %s ", cfg.MaxRunTime))
+	sb.WriteString(fmt.Sprintf("Type: %s", cfg.Type))
+	if cfg.Delay != "" && cfg.Delay != defaultDelay {
+		sb.WriteString(fmt.Sprintf(", Delay: %s", cfg.Delay))
+	}
+	if cfg.Batching != "" && cfg.Batching != defaultBatching {
+		sb.WriteString(fmt.Sprintf(", Batching: %s", cfg.Batching))
+	}
+	if cfg.MaxSize > 0 {
+		sb.WriteString(fmt.Sprintf(", Max Batch Size: %d bytes", cfg.MaxSize))
+	}
+	if cfg.MaxDataPoints > 0 {
+		sb.WriteString(fmt.Sprintf(", Max Data Points: %d", cfg.MaxDataPoints))
+	}
+	if cfg.MaxRunTime != "" && cfg.MaxRunTime != defaultMaxDuration {
+		sb.WriteString(fmt.Sprintf(", Max Runtime: %s", cfg.MaxRunTime))
+	}
 
 	return sb.String()
 }
