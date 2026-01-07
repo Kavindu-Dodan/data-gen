@@ -42,12 +42,31 @@ flowchart LR
 
 ## Quick Start
 
-Requires Go version 1.24+
-
 - Clone the repository (alternatively download the latest release)
-- Copy `config.sample.yaml` and edit as needed.
-- Start the data generator with config file as the only parameter
+- Copy following to `config.yaml`
+  ```yaml
+  input:
+    type: LOGS
+    delay: 500ms
+    batching: 2s
+    max_batch_size: 500_000
+    max_runtime: 5s
+  output:
+   type: DEBUG
+   config:
+      verbosity: detailed
+  ```
+- Run data generator with one of the following commands, 
+  
+  From source,
+
   `go run cmd/main.go --config ./config.yaml`
+
+  Using a release binary,
+
+  `./dataGenerator_darwin_arm64 --config ./config.yaml`
+
+Observe the terminal for generated logs.
 
 > [!TIP]
 > Use `--debug` flag for debug level logs.
