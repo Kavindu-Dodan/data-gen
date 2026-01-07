@@ -8,9 +8,9 @@ on:
     branches:
       - main
 jobs:
-  test:
+  main:
+    name: Validate PR content
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -20,5 +20,17 @@ jobs:
         with:
           go-version: '1.24'
 
+      - name: Install tools
+        run: make install-tools
+
       - name: Run tests
         run: make test
+
+      - name: Check linting
+        run: make lint
+
+      - name: Check import order
+        run: make check-imports
+
+      - name: Run and validate
+        run: go run  cmd/main.go --debug --config ./test/config_debug.yml

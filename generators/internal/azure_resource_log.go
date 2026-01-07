@@ -1,4 +1,4 @@
-package generators
+package internal
 
 import (
 	"encoding/json"
@@ -26,7 +26,7 @@ func newDefaultAzureResourceLogCfg() *azureResourceLogCfg {
 	}
 }
 
-func newAzureResourceLogGen(cfg conf.InputConfig) *AzureResourceLogGen {
+func NewAzureResourceLogGen(cfg conf.InputConfig) *AzureResourceLogGen {
 	config := newDefaultAzureResourceLogCfg()
 	err := cfg.Conf.Decode(&config)
 	if err != nil {
@@ -117,16 +117,16 @@ func buildAzureResourceLog() azureResourceLog {
 	resultType := randomAzureResultType()
 
 	log := azureResourceLog{
-		Time:              time.Now().UTC().Format(time.RFC3339Nano),
-		ResourceID:        randomAzureResourceID(),
-		OperationName:     operationName,
-		Category:          category,
-		ResultType:        resultType,
-		DurationMs:        randomDurationMs(),
-		CallerIPAddress:   randomIP(),
-		CorrelationID:     randomAzureGUID(),
-		Level:             randomAzureLogLevel(),
-		Location:          randomAzureRegion(),
+		Time:            time.Now().UTC().Format(time.RFC3339Nano),
+		ResourceID:      randomAzureResourceID(),
+		OperationName:   operationName,
+		Category:        category,
+		ResultType:      resultType,
+		DurationMs:      randomDurationMs(),
+		CallerIPAddress: randomIP(),
+		CorrelationID:   randomAzureGUID(),
+		Level:           randomAzureLogLevel(),
+		Location:        randomAzureRegion(),
 	}
 
 	// Add result signature for failed operations

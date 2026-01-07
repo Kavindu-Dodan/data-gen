@@ -1,4 +1,4 @@
-package exporters
+package internal
 
 import (
 	"context"
@@ -15,7 +15,6 @@ import (
 type EventHubExporter struct {
 	cfg      eventHubCfg
 	producer *azeventhubs.ProducerClient
-	shChan   chan struct{}
 }
 
 // eventHubCfg specifies the Event Hub namespace and name.
@@ -25,7 +24,7 @@ type eventHubCfg struct {
 	ConnectionString string `yaml:"connection_string"`
 }
 
-func newEventHubExporter(ctx context.Context, c *conf.Config) (*EventHubExporter, error) {
+func NewEventHubExporter(ctx context.Context, c *conf.Config) (*EventHubExporter, error) {
 	var cfg eventHubCfg
 	err := c.Output.Conf.Decode(&cfg)
 	if err != nil {
@@ -71,11 +70,10 @@ func newEventHubExporter(ctx context.Context, c *conf.Config) (*EventHubExporter
 	return &EventHubExporter{
 		cfg:      cfg,
 		producer: producer,
-		shChan:   make(chan struct{}),
 	}, nil
 }
 
-func (e *EventHubExporter) send(data *[]byte) error {
+func (e *EventHubExporter) Send(data *[]byte) error {
 	batch, err := e.producer.NewEventDataBatch(context.Background(), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create event batch: %w", err)
@@ -96,11 +94,4 @@ func (e *EventHubExporter) send(data *[]byte) error {
 	}
 
 	return nil
-}
-
-func (e *EventHubExporter) stop() {
-	close(e.shChan)
-	if e.producer != nil {
-		e.producer.Close(context.Background())
-	}
 }

@@ -1,4 +1,4 @@
-package exporters
+package internal
 
 import (
 	"context"
@@ -18,7 +18,6 @@ import (
 type CloudWatchExporter struct {
 	cfg              cwLogCfg
 	cloudwatchClient *cloudwatchlogs.Client
-	shChan           chan struct{}
 }
 
 // cwLogCfg specifies the CloudWatch log group and stream names.
@@ -27,7 +26,7 @@ type cwLogCfg struct {
 	LogStreamName string `yaml:"log_stream"`
 }
 
-func newCloudWatchLogExporter(ctx context.Context, c *conf.Config) (*CloudWatchExporter, error) {
+func NewCloudWatchLogExporter(ctx context.Context, c *conf.Config) (*CloudWatchExporter, error) {
 	var cfg cwLogCfg
 	err := c.Output.Conf.Decode(&cfg)
 	if err != nil {
@@ -46,7 +45,7 @@ func newCloudWatchLogExporter(ctx context.Context, c *conf.Config) (*CloudWatchE
 		return nil, fmt.Errorf("cloudwatch log group and/or stream name must be specified for output type %s", c.Output.Type)
 	}
 
-	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(c.AWSCfg.Profile), config.WithRegion(c.AWSCfg.Region))
+	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(c.Profile), config.WithRegion(c.Region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default aws config: %w", err)
 	}
@@ -56,11 +55,10 @@ func newCloudWatchLogExporter(ctx context.Context, c *conf.Config) (*CloudWatchE
 	return &CloudWatchExporter{
 		cfg:              cfg,
 		cloudwatchClient: cloudwatchClient,
-		shChan:           make(chan struct{}),
 	}, nil
 }
 
-func (ce CloudWatchExporter) send(data *[]byte) error {
+func (ce CloudWatchExporter) Send(data *[]byte) error {
 	record := cloudwatchlogs.PutLogEventsInput{
 		LogGroupName:  aws.String(ce.cfg.LogGroupName),
 		LogStreamName: aws.String(ce.cfg.LogStreamName),
@@ -78,8 +76,4 @@ func (ce CloudWatchExporter) send(data *[]byte) error {
 	}
 
 	return nil
-}
-
-func (ce CloudWatchExporter) stop() {
-	close(ce.shChan)
 }

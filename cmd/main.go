@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"data-gen/conf"
 	"data-gen/exporters"
@@ -15,15 +15,12 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, signalStop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-	var cfgLocation = flag.String("config", "./config.yaml", "configuration file. Default to `./config.yaml`")
-	var debug = flag.Bool("debug", false, "enable debug logging")
-	flag.Parse()
-
-	b, err := os.ReadFile(*cfgLocation)
+	args := parseArgs()
+	b, err := os.ReadFile(args.configPath)
 	if err != nil {
-		slog.Error("Config file reading error", "error", err, "file", *cfgLocation)
+		slog.Error("Config file reading error", "error", err, "file", args.configPath)
 		return
 	}
 
@@ -34,7 +31,7 @@ func main() {
 	}
 
 	logLevel := slog.LevelInfo
-	if *debug {
+	if args.debug {
 		logLevel = slog.LevelDebug
 	}
 
@@ -56,50 +53,64 @@ func main() {
 	slog.Info("Starting data generator")
 	slog.Info("Input", "config", configurations.Input.Print())
 	slog.Info("Output", "config", configurations.Output.Print())
-
 	if configurations.UsesAWS() {
 		slog.Info("AWS", "config", configurations.AWSCfg.Print())
 	}
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-
-	generator, err := generators.GeneratorFor(configurations)
+	err = run(ctx, signalStop, configurations)
 	if err != nil {
-		slog.Error("Error creating generator", "error", err, "type", configurations.Input.Type)
+		slog.Error(fmt.Sprintf("Runtime error: %s", err.Error()))
 		return
 	}
+}
 
-	exporter, err := exporters.ExporterFor(ctx, configurations)
+// run starts the data generator and exporter based on the provided configuration.
+// This is a blocking call that runs until a termination signal is received or an error occurs.
+func run(ctx context.Context, sigStop context.CancelFunc, cfg *conf.Config) error {
+	generator, err := generators.GeneratorFor(cfg)
 	if err != nil {
-		slog.Error("Error creating exporter", "error", err, "type", configurations.Output.Type)
-		return
+		return fmt.Errorf("error creating generator: %s", err.Error())
 	}
 
-	duration, err := time.ParseDuration(configurations.Input.Delay)
+	exporter, err := exporters.ExporterFor(ctx, cfg)
 	if err != nil {
-		slog.Error("Error parsing delay", "error", err, "delay", configurations.Input.Delay, "hint", "use format like '5s' or '10ms'")
-		return
+		return fmt.Errorf("error creating exporter: %s", err.Error())
 	}
 
-	dataInput, inputClose, genError := generator.Start(duration)
+	dataInput, inputComplete, genError := generator.Start()
 	expErr := exporter.Start(dataInput)
 
 	select {
-	case <-sigs:
-		slog.Info("Received shutdown signal")
-	case <-inputClose:
-		slog.Info("Generator completed")
+	case <-ctx.Done():
+		slog.Info("Context cancelled, shutting down...")
+	case <-inputComplete:
+		slog.Info("Input completed, shutting down...")
 	case er := <-genError:
 		slog.Error("Error from generator", "error", er)
 	case er := <-expErr:
 		slog.Error("Error from exporter", "error", er)
 	}
 
-	slog.Info("Shutting down...")
-	// provide a grace period to complete the exports
-	<-time.After(time.Second * 2)
+	// stop listening to signals & stop the generator
+	sigStop()
 	generator.Stop()
 	exporter.Stop()
 
+	return nil
+}
+
+type flags struct {
+	configPath string
+	debug      bool
+}
+
+func parseArgs() flags {
+	cfgPath := flag.String("config", "./config.yaml", "configuration file. Default to `./config.yaml`")
+	debug := flag.Bool("debug", false, "enable debug logging")
+	flag.Parse()
+
+	return flags{
+		configPath: *cfgPath,
+		debug:      *debug,
+	}
 }
