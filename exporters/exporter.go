@@ -116,7 +116,7 @@ func (e *Exporter) Stop() {
 	if e.cfg.Output.WaitForCompletion {
 		slog.Info("Waiting for final exports to complete")
 		e.sending.Lock()
-
+		e.sending.Unlock()
 		return
 	}
 
