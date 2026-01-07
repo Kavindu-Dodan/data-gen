@@ -4,10 +4,22 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"data-gen/conf"
 	"data-gen/exporters/internal"
+)
+
+const (
+	file          = "FILE"
+	s3            = "S3"
+	firehose      = "FIREHOSE"
+	cloudwatchLog = "CLOUDWATCH_LOG"
+	eventhub      = "EVENTHUB"
+	debug         = "DEBUG"
+
+	defaultShutdownWait = 2 * time.Second
 )
 
 type output interface {
@@ -19,33 +31,33 @@ func ExporterFor(ctx context.Context, cfg *conf.Config) (*Exporter, error) {
 	var err error
 
 	switch cfg.Output.Type {
-	case "FILE":
+	case file:
 		exporter, err = internal.NewFileExporter(cfg)
 		if err != nil {
 			return nil, err
 		}
-	case "S3":
+	case s3:
 		exporter, err = internal.NewS3BucketExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-	case "FIREHOSE":
+	case firehose:
 		exporter, err = internal.NewFirehoseExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
 
-	case "CLOUDWATCH_LOG":
+	case cloudwatchLog:
 		exporter, err = internal.NewCloudWatchLogExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-	case "EVENTHUB":
+	case eventhub:
 		exporter, err = internal.NewEventHubExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-	case "DEBUG":
+	case debug:
 		exporter, err = internal.NewDebugExporter(cfg)
 		if err != nil {
 			return nil, err
@@ -63,6 +75,8 @@ type Exporter struct {
 	output  output
 	errChan chan error
 	shChan  chan struct{}
+
+	sending sync.Mutex
 }
 
 func newExporter(cfg *conf.Config, output output) *Exporter {
@@ -79,10 +93,12 @@ func (e *Exporter) Start(data <-chan *[]byte) <-chan error {
 		for {
 			select {
 			case d := <-data:
+				e.sending.Lock()
 				err := e.output.Send(d)
 				if err != nil {
 					e.errChan <- err
 				}
+				e.sending.Unlock()
 			case <-e.shChan:
 				slog.Info("Shutting down exporter")
 				return
@@ -94,10 +110,17 @@ func (e *Exporter) Start(data <-chan *[]byte) <-chan error {
 }
 
 func (e *Exporter) Stop() {
-	// close error channel immediately to avoid blocking on error sends
 	close(e.errChan)
-
-	// todo: configurable shutdown wait time through config
-	<-time.After(time.Second * 2)
 	close(e.shChan)
+
+	if e.cfg.Output.WaitForCompletion {
+		slog.Info("Waiting for final exports to complete")
+		e.sending.Lock()
+		// nolint: staticcheck
+		e.sending.Unlock()
+		return
+	}
+
+	slog.Info("Shutting down exporter")
+	time.Sleep(defaultShutdownWait)
 }
