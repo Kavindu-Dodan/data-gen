@@ -1,24 +1,25 @@
-package generators
+package internal
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"math/rand/v2"
+
+	"github.com/google/uuid"
 )
 
-// cloudTrail generates AWS CloudTrail logs for S3 data events.
-type cloudTrail struct {
+// CloudTrail generates AWS CloudTrail logs for S3 data events.
+type CloudTrail struct {
 	current     []cloudTrailRecord
 	currentSize int64
 }
 
-func newCloudTrailGen() *cloudTrail {
-	return &cloudTrail{
+func NewCloudTrailGen() *CloudTrail {
+	return &CloudTrail{
 		current: []cloudTrailRecord{},
 	}
 }
 
-func (c *cloudTrail) Generate() (int64, error) {
+func (c *CloudTrail) Generate() (int64, error) {
 	id := randomAZ09String(12)
 	accountID := randomSampleAccountID()
 	s3EventName := randomS3EventName()
@@ -71,7 +72,7 @@ func (c *cloudTrail) Generate() (int64, error) {
 	return c.currentSize, nil
 }
 
-func (c *cloudTrail) GetAndReset() []byte {
+func (c *CloudTrail) GetAndReset() []byte {
 	marshal, _ := json.Marshal(cloudTrailLogFor(c.current))
 	c.current = []cloudTrailRecord{} // Reset current records
 	c.currentSize = 0                // Reset current size

@@ -1,4 +1,4 @@
-package generators
+package internal
 
 import (
 	"fmt"
@@ -12,7 +12,6 @@ const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 const charsCapital = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 var ff = false
-var tt = true
 
 var certARN = []string{"arn:aws:acm:us-east-1:123456789012:certificate/1", "arn:aws:acm:us-east-1:123456789012:certificate/2", "arn:aws:acm:us-east-1:123456789012:certificate/3"}
 var contentTypes = []string{"text/html", "application/json", "text/plain", "application/xml"}

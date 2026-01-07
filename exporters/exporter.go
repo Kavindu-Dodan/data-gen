@@ -2,81 +2,86 @@ package exporters
 
 import (
 	"context"
-	"data-gen/conf"
 	"fmt"
 	"log/slog"
+	"time"
+
+	"data-gen/conf"
+	"data-gen/exporters/internal"
 )
 
 type output interface {
-	send(*[]byte) error
+	Send(*[]byte) error
 }
 
-func ExporterFor(ctx context.Context, config *conf.Config) (*Exporter, error) {
-	switch config.Output.Type {
+func ExporterFor(ctx context.Context, cfg *conf.Config) (*Exporter, error) {
+	var exporter output
+	var err error
+
+	switch cfg.Output.Type {
 	case "FILE":
-		exporter, err := newFileExporter(config)
+		exporter, err = internal.NewFileExporter(cfg)
 		if err != nil {
 			return nil, err
 		}
-		return newExporter(exporter), nil
 	case "S3":
-		exporter, err := newS3BucketExporter(ctx, config)
+		exporter, err = internal.NewS3BucketExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-		return newExporter(exporter), nil
 	case "FIREHOSE":
-		exporter, err := newFirehoseExporter(ctx, config)
+		exporter, err = internal.NewFirehoseExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
 
-		return newExporter(exporter), nil
 	case "CLOUDWATCH_LOG":
-		exporter, err := newCloudWatchLogExporter(ctx, config)
+		exporter, err = internal.NewCloudWatchLogExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-		return newExporter(exporter), nil
 	case "EVENTHUB":
-		exporter, err := newEventHubExporter(ctx, config)
+		exporter, err = internal.NewEventHubExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-		return newExporter(exporter), nil
 	case "DEBUG":
-		exporter, err := newDebugExporter(config)
+		exporter, err = internal.NewDebugExporter(cfg)
 		if err != nil {
 			return nil, err
 		}
-		return newExporter(exporter), nil
+	default:
+		return nil, fmt.Errorf("unknown output type: %s", cfg.Output.Type)
 	}
 
-	return nil, fmt.Errorf("unknown output type: %s", config.Output.Type)
+	return newExporter(cfg, exporter), nil
 }
 
 // Exporter manages the lifecycle of sending generated data to configured outputs.
 type Exporter struct {
-	output     output
-	inputClose <-chan interface{}
-	shChan     chan struct{}
+	cfg     *conf.Config
+	output  output
+	errChan chan error
+	shChan  chan struct{}
 }
 
-func newExporter(output output) *Exporter {
+func newExporter(cfg *conf.Config, output output) *Exporter {
 	return &Exporter{
-		output: output,
-		shChan: make(chan struct{})}
+		cfg:     cfg,
+		output:  output,
+		errChan: make(chan error, 2),
+		shChan:  make(chan struct{}),
+	}
 }
 
 func (e *Exporter) Start(data <-chan *[]byte) <-chan error {
-	errChan := make(chan error)
 	go func() {
 		for {
 			select {
 			case d := <-data:
-				err := e.output.send(d)
+				err := e.output.Send(d)
 				if err != nil {
-					errChan <- err
+					e.errChan <- err
 				}
 			case <-e.shChan:
 				slog.Info("Shutting down exporter")
@@ -84,9 +89,15 @@ func (e *Exporter) Start(data <-chan *[]byte) <-chan error {
 			}
 		}
 	}()
-	return errChan
+
+	return e.errChan
 }
 
 func (e *Exporter) Stop() {
+	// close error channel immediately to avoid blocking on error sends
+	close(e.errChan)
+
+	// todo: configurable shutdown wait time through config
+	<-time.After(time.Second * 2)
 	close(e.shChan)
 }

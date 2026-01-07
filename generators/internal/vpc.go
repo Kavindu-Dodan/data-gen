@@ -1,4 +1,4 @@
-package generators
+package internal
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ type VPCGen struct {
 	init bool
 }
 
-func newVPCGen() *VPCGen {
+func NewVPCGen() *VPCGen {
 	return &VPCGen{
 		buf:  newTrackedBuffer(),
 		init: true,

@@ -1,15 +1,16 @@
-package exporters
+package internal
 
 import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"data-gen/conf"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 	"time"
+
+	"data-gen/conf"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
@@ -24,7 +25,6 @@ const (
 type S3BucketExporter struct {
 	cfg    s3Config
 	client *awss3.Client
-	shChan chan struct{}
 }
 
 // s3Config defines S3 bucket, path, and compression settings.
@@ -40,7 +40,7 @@ func newDefaultS3Config() s3Config {
 	}
 }
 
-func newS3BucketExporter(ctx context.Context, configuration *conf.Config) (*S3BucketExporter, error) {
+func NewS3BucketExporter(ctx context.Context, configuration *conf.Config) (*S3BucketExporter, error) {
 	cfg := newDefaultS3Config()
 	err := configuration.Output.Conf.Decode(&cfg)
 	if err != nil {
@@ -66,7 +66,7 @@ func newS3BucketExporter(ctx context.Context, configuration *conf.Config) (*S3Bu
 
 	cfg.Bucket = toBucketName(cfg.Bucket)
 
-	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(configuration.AWSCfg.Profile), config.WithRegion(configuration.AWSCfg.Region))
+	loadedAwsConfig, err := config.LoadDefaultConfig(ctx, config.WithSharedConfigProfile(configuration.Profile), config.WithRegion(configuration.Region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load default aws config: %w", err)
 	}
@@ -74,11 +74,10 @@ func newS3BucketExporter(ctx context.Context, configuration *conf.Config) (*S3Bu
 	return &S3BucketExporter{
 		cfg:    cfg,
 		client: awss3.NewFromConfig(loadedAwsConfig),
-		shChan: make(chan struct{}),
 	}, nil
 }
 
-func (s *S3BucketExporter) send(data *[]byte) error {
+func (s *S3BucketExporter) Send(data *[]byte) error {
 	var content io.Reader
 	var encoding string
 
@@ -111,10 +110,6 @@ func (s *S3BucketExporter) send(data *[]byte) error {
 	}
 
 	return nil
-}
-
-func (s *S3BucketExporter) stop() {
-	close(s.shChan)
 }
 
 func gzipCompress(input []byte) ([]byte, error) {

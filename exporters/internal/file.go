@@ -1,4 +1,4 @@
-package exporters
+package internal
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ func newDefaultFileCfg() *fileCfg {
 	}
 }
 
-func newFileExporter(config *conf.Config) (*FileExporter, error) {
+func NewFileExporter(config *conf.Config) (*FileExporter, error) {
 	cfg := newDefaultFileCfg()
 	err := config.Output.Conf.Decode(&cfg)
 	if err != nil {
@@ -45,7 +45,7 @@ func newFileExporter(config *conf.Config) (*FileExporter, error) {
 	}, nil
 }
 
-func (f *FileExporter) send(data *[]byte) error {
+func (f *FileExporter) Send(data *[]byte) error {
 	file, err := os.OpenFile(fmt.Sprintf("%s_%d", f.cfg.Location, f.entry), os.O_APPEND|os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return fmt.Errorf("unable to open file %s: %w", f.cfg.Location, err)

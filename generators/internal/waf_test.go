@@ -1,9 +1,10 @@
-package generators
+package internal
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 // see - https://docs.aws.amazon.com/waf/latest/developerguide/logging-examples.html

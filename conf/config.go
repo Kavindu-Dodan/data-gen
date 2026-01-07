@@ -11,7 +11,7 @@ import (
 
 const (
 	defaultProfile     = "default"
-	defaultRegion      = "us-east-1"
+	defaultAWSRegion   = "us-east-1"
 	defaultDelay       = "5s"
 	defaultBatching    = "0s"
 	defaultMaxDuration = "0s"
@@ -94,7 +94,7 @@ type InputConfig struct {
 	Conf          yaml.Node `yaml:"config"`
 	Delay         string    `yaml:"delay"`
 	Batching      string    `yaml:"batching"`
-	MaxSize       int       `yaml:"max_batch_size"`
+	MaxBatchSize  int64     `yaml:"max_batch_size"`
 	MaxDataPoints int64     `yaml:"max_data_points"`
 	MaxRunTime    string    `yaml:"max_runtime"`
 }
@@ -117,8 +117,8 @@ func (cfg *InputConfig) Print() string {
 	if cfg.Batching != "" && cfg.Batching != defaultBatching {
 		sb.WriteString(fmt.Sprintf(", Batching: %s", cfg.Batching))
 	}
-	if cfg.MaxSize > 0 {
-		sb.WriteString(fmt.Sprintf(", Max Batch Size: %d bytes", cfg.MaxSize))
+	if cfg.MaxBatchSize > 0 {
+		sb.WriteString(fmt.Sprintf(", Max Batch Size: %d bytes", cfg.MaxBatchSize))
 	}
 	if cfg.MaxDataPoints > 0 {
 		sb.WriteString(fmt.Sprintf(", Max Data Points: %d", cfg.MaxDataPoints))
@@ -146,18 +146,10 @@ type AWSCfg struct {
 	Region  string `yaml:"region"`
 }
 
-func (c *AWSCfg) Print() string {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("Profile: %s, ", c.Profile))
-	sb.WriteString(fmt.Sprintf("Region: %s", c.Region))
-
-	return sb.String()
-}
-
 func newDefaultAWSCfg() *AWSCfg {
 	return &AWSCfg{
 		Profile: defaultProfile,
-		Region:  defaultRegion,
+		Region:  defaultAWSRegion,
 	}
 }
 
@@ -168,46 +160,47 @@ func NewConfig(input []byte) (*Config, error) {
 		return nil, err
 	}
 
-	// override with env variables if defined
-	if v := os.Getenv(EnvInputType); v != "" {
-		cfg.Input.Type = v
-	}
-	if v := os.Getenv(EnvInputDelay); v != "" {
-		cfg.Input.Delay = v
-	}
-	if v := os.Getenv(EnvInputBatching); v != "" {
-		cfg.Input.Batching = v
-	}
-	if v := os.Getenv(EnvInputMaxBatchSize); v != "" {
-		size, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchSize, err)
-		}
-		cfg.Input.MaxSize = size
-	}
-	if v := os.Getenv(EnvMaxRuntime); v != "" {
-		cfg.Input.MaxRunTime = v
+	cfg.Input.Type = envOrDefault(EnvInputType, cfg.Input.Type)
+	cfg.Input.Delay = envOrDefault(EnvInputDelay, cfg.Input.Delay)
+	cfg.Input.Batching = envOrDefault(EnvInputBatching, cfg.Input.Batching)
+	cfg.Input.MaxBatchSize, err = envToInt(EnvInputMaxBatchSize, 10, 64, cfg.Input.MaxBatchSize)
+	if err != nil {
+		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchSize, err)
 	}
 
-	if v := os.Getenv(EnvInputMaxDataPoints); v != "" {
-		size, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchSize, err)
-		}
-		cfg.Input.MaxDataPoints = size
+	cfg.Input.MaxDataPoints, err = envToInt(EnvInputMaxDataPoints, 10, 64, cfg.Input.MaxDataPoints)
+	if err != nil {
+		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxDataPoints, err)
 	}
 
-	if v := os.Getenv(EnvOutType); v != "" {
-		cfg.Output.Type = v
-	}
+	cfg.Input.MaxRunTime = envOrDefault(EnvMaxRuntime, cfg.Input.MaxRunTime)
+	cfg.Output.Type = envOrDefault(EnvOutType, cfg.Output.Type)
 
-	if v := os.Getenv(EnvAWSRegion); v != "" {
-		cfg.AWSCfg.Region = v
-	}
-
-	if v := os.Getenv(EnvAWSProfile); v != "" {
-		cfg.AWSCfg.Profile = v
-	}
+	cfg.Region = envOrDefault(EnvAWSRegion, cfg.Region)
+	cfg.Profile = envOrDefault(EnvAWSProfile, cfg.Profile)
 
 	return cfg, nil
+}
+
+func (c *AWSCfg) Print() string {
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf("Profile: %s, ", c.Profile))
+	sb.WriteString(fmt.Sprintf("Region: %s", c.Region))
+
+	return sb.String()
+}
+
+func envOrDefault(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func envToInt(key string, base int, bit int, fallback int64) (int64, error) {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback, nil
+	}
+	return strconv.ParseInt(v, base, bit)
 }

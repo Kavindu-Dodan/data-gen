@@ -1,4 +1,4 @@
-package generators
+package internal
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ type WAFGen struct {
 	buf   trackedBuffer
 }
 
-func newWAFGen() *WAFGen {
+func NewWAFGen() *WAFGen {
 	return &WAFGen{
 		wafId: randomWAFACLID(),
 	}
