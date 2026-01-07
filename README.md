@@ -99,7 +99,14 @@ input:
 
 ### Output configurations
 
-Given below are supported output types (environment variable `ENV_OUT_TYPE`),
+Given below are supported output configurations and their related environment variable overrides,
+
+| YAML Property         | Environment Variable          | Description                                                                |
+|-----------------------|-------------------------------|----------------------------------------------------------------------------|
+| `type`                | `ENV_OUT_TYPE`                | Accepts the output type (see table below)                                  |
+| `wait_for_completion` | `ENV_OUT_WAIT_FOR_COMPLETION` | Wait for output exports to complete when shutting down. Default is `true`. |
+
+Given below are supported output types,,
 
 | Output Type      | Description                        |
 |------------------|------------------------------------|

@@ -2,6 +2,7 @@ package conf
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ const (
 	EnvMaxRuntime         = "ENV_INPUT_MAX_RUNTIME"
 
 	EnvOutType        = "ENV_OUT_TYPE"
+	EnvOutWait        = "ENV_OUT_WAIT_FOR_COMPLETION"
 	EnvOutLocation    = "ENV_OUT_LOCATION"
 	EnvOutCompression = "ENV_OUT_COMPRESSION"
 	EnvOutS3Bucket    = "ENV_OUT_S3_BUCKET"
@@ -51,6 +53,7 @@ func newDefaultConfig() *Config {
 	return &Config{
 		AWSCfg: *newDefaultAWSCfg(),
 		Input:  *newDefaultInputConfig(),
+		Output: *newDefaultOutputConfig(),
 	}
 }
 
@@ -132,8 +135,15 @@ func (cfg *InputConfig) Print() string {
 
 // OutputConfig specifies where and how to export generated data.
 type OutputConfig struct {
-	Type string    `yaml:"type"`
-	Conf yaml.Node `yaml:"config"`
+	Type              string    `yaml:"type"`
+	WaitForCompletion bool      `yaml:"wait_for_completion"`
+	Conf              yaml.Node `yaml:"config"`
+}
+
+func newDefaultOutputConfig() *OutputConfig {
+	return &OutputConfig{
+		WaitForCompletion: true,
+	}
 }
 
 func (cfg *OutputConfig) Print() string {
@@ -175,6 +185,7 @@ func NewConfig(input []byte) (*Config, error) {
 
 	cfg.Input.MaxRunTime = envOrDefault(EnvMaxRuntime, cfg.Input.MaxRunTime)
 	cfg.Output.Type = envOrDefault(EnvOutType, cfg.Output.Type)
+	cfg.Output.WaitForCompletion = envToBool(EnvOutWait, cfg.Output.WaitForCompletion)
 
 	cfg.Region = envOrDefault(EnvAWSRegion, cfg.Region)
 	cfg.Profile = envOrDefault(EnvAWSProfile, cfg.Profile)
@@ -203,4 +214,19 @@ func envToInt(key string, base int, bit int, fallback int64) (int64, error) {
 		return fallback, nil
 	}
 	return strconv.ParseInt(v, base, bit)
+}
+
+func envToBool(key string, fallback bool) bool {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+
+	parseBool, err := strconv.ParseBool(v)
+	if err != nil {
+		slog.Warn("Invalid value for %s: %s", key, err)
+		return fallback
+	}
+
+	return parseBool
 }
