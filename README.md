@@ -42,7 +42,7 @@ flowchart LR
 
 ## Quick Start
 
-- Clone the repository (alternatively download the latest release)
+- Clone the repository (alternatively download a release binary from [releases](https://github.com/Kavindu-Dodan/data-gen/releases))
 - Copy following to `config.yaml`
   ```yaml
   input:
