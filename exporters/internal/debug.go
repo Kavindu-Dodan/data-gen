@@ -54,7 +54,7 @@ func (d *DebugExporter) Send(data *[]byte) error {
 	switch d.cfg.Verbosity {
 	case "basic":
 		// Just show that data was received
-		slog.Info(fmt.Sprintf("%s Data received (%d bytes)\n", d.cfg.Prefix, len(*data)))
+		slog.Info(fmt.Sprintf("%s Data received (%d bytes)", d.cfg.Prefix, len(*data)))
 	case "detailed":
 		// Show full data with formatting
 		d.writeDetailed(data)
@@ -72,7 +72,7 @@ func (d *DebugExporter) writeNormal(data *[]byte) {
 
 	for _, line := range lines {
 		if line != "" {
-			slog.Info(fmt.Sprintf("%s %s\n", d.cfg.Prefix, line))
+			slog.Info(fmt.Sprintf("%s - %s", d.cfg.Prefix, line))
 		}
 	}
 }
@@ -81,17 +81,16 @@ func (d *DebugExporter) writeDetailed(data *[]byte) {
 	dataStr := string(*data)
 	lines := strings.Split(strings.TrimSpace(dataStr), "\n")
 
-	slog.Info(fmt.Sprintf("%s ========================================\n", d.cfg.Prefix))
-	slog.Info(fmt.Sprintf("%s Data Size: %d bytes\n", d.cfg.Prefix, len(*data)))
-	slog.Info(fmt.Sprintf("%s Number of Lines: %d\n", d.cfg.Prefix, len(lines)))
-	slog.Info(fmt.Sprintf("%s ----------------------------------------\n", d.cfg.Prefix))
+	slog.Info(fmt.Sprintf("%s ========================================", d.cfg.Prefix))
+	slog.Info(fmt.Sprintf("%s Data Size: %d bytes", d.cfg.Prefix, len(*data)))
+	slog.Info(fmt.Sprintf("%s Number of Lines: %d", d.cfg.Prefix, len(lines)))
+	slog.Info(fmt.Sprintf("%s ----------------------------------------", d.cfg.Prefix))
 
 	for i, line := range lines {
 		if line != "" {
-			slog.Info(fmt.Sprintf("%s [%d] %s\n", d.cfg.Prefix, i+1, line))
-
+			slog.Info(fmt.Sprintf("%s [%d] '%s'", d.cfg.Prefix, i+1, line))
 		}
 	}
 
-	slog.Info(fmt.Sprintf("%s ========================================\n", d.cfg.Prefix))
+	slog.Info(fmt.Sprintf("%s ========================================", d.cfg.Prefix))
 }
