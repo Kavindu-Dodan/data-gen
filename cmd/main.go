@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -44,10 +43,9 @@ func main() {
 		Level:     logLevel,
 		AddSource: false,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			// Format time as shorter HH:MM:SS instead of full RFC3339
 			if a.Key == slog.TimeKey {
 				t := a.Value.Time()
-				return slog.String(slog.TimeKey, t.Format("15:04:05"))
+				return slog.String(slog.TimeKey, t.Format("2006-01-02T15:04:05"))
 			}
 			return a
 		},
@@ -55,9 +53,13 @@ func main() {
 
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, opts)))
 
-	// Print configuration in a readable format
 	slog.Info("Starting data generator")
-	fmt.Fprintf(os.Stdout, "%s\n", configurations.Print())
+	slog.Info("Input", "config", configurations.Input.Print())
+	slog.Info("Output", "config", configurations.Output.Print())
+
+	if configurations.UsesAWS() {
+		slog.Info("AWS", "config", configurations.AWSCfg.Print())
+	}
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)

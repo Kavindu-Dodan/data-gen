@@ -63,7 +63,7 @@ func (cfg *Config) Print() string {
 	sb.WriteString("    " + cfg.Output.Print())
 
 	// Only include AWS config if output type uses AWS
-	if cfg.usesAWS() {
+	if cfg.UsesAWS() {
 		sb.WriteString("\n  AWS:\n")
 		sb.WriteString("    " + cfg.AWSCfg.Print())
 	}
@@ -71,8 +71,8 @@ func (cfg *Config) Print() string {
 	return sb.String()
 }
 
-// usesAWS returns true if the output type or input type requires AWS configuration
-func (cfg *Config) usesAWS() bool {
+// UsesAWS returns true if the output type or input type requires AWS configuration
+func (cfg *Config) UsesAWS() bool {
 	// Check if output type requires AWS
 	switch cfg.Output.Type {
 	case "S3", "FIREHOSE", "CLOUDWATCH_LOG":
