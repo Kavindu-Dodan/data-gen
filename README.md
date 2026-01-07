@@ -52,8 +52,8 @@ flowchart LR
     max_batch_size: 500_000
     max_runtime: 5s
   output:
-   type: DEBUG
-   config:
+    type: DEBUG
+    config:
       verbosity: detailed
   ```
 - Run data generator with one of the following commands, 
