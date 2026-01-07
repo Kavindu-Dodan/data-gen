@@ -106,7 +106,7 @@ Given below are supported output configurations and their related environment va
 | `type`                | `ENV_OUT_TYPE`                | Accepts the output type (see table below)                                  |
 | `wait_for_completion` | `ENV_OUT_WAIT_FOR_COMPLETION` | Wait for output exports to complete when shutting down. Default is `true`. |
 
-Given below are supported output types,,
+Given below are supported output types,
 
 | Output Type      | Description                        |
 |------------------|------------------------------------|
