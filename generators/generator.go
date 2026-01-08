@@ -173,12 +173,12 @@ func (g *Generator) runGenerator() {
 
 // shouldEmit checks if conditions are met to emit generated data.
 // Checks are done for,
-// - batching duration
+// - batching duration (iff defined)
 // - batch size (iff defined)
 // - batch count (iff defined)
 // - max data points (iff defined)
 func (g *Generator) shouldEmit(sinceLastBatch time.Duration, batchSizeBytes int64, batchCount int64, dataPointSum int64) bool {
-	if sinceLastBatch >= g.parsedDurations.batchingDuration {
+	if g.parsedDurations.batchingDuration > 0 && sinceLastBatch >= g.parsedDurations.batchingDuration {
 		return true
 	}
 
