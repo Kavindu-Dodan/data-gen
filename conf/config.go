@@ -21,6 +21,7 @@ const (
 	EnvInputDelay         = "ENV_INPUT_DELAY"
 	EnvInputBatching      = "ENV_INPUT_BATCHING"
 	EnvInputMaxBatchSize  = "ENV_INPUT_MAX_BATCH_SIZE"
+	EnvInputMaxBatchCount = "ENV_INPUT_MAX_BATCH_COUNT"
 	EnvInputMaxDataPoints = "ENV_INPUT_MAX_DATA_POINTS"
 	EnvMaxRuntime         = "ENV_INPUT_MAX_RUNTIME"
 
@@ -98,6 +99,7 @@ type InputConfig struct {
 	Delay         string    `yaml:"delay"`
 	Batching      string    `yaml:"batching"`
 	MaxBatchSize  int64     `yaml:"max_batch_size"`
+	MaxBatchCount int64     `yaml:"max_batch_count"`
 	MaxDataPoints int64     `yaml:"max_data_points"`
 	MaxRunTime    string    `yaml:"max_runtime"`
 }
@@ -174,6 +176,7 @@ func NewConfig(input []byte) (*Config, error) {
 	cfg.Input.Delay = envOrDefault(EnvInputDelay, cfg.Input.Delay)
 	cfg.Input.Batching = envOrDefault(EnvInputBatching, cfg.Input.Batching)
 	cfg.Input.MaxBatchSize, err = envToInt(EnvInputMaxBatchSize, 10, 64, cfg.Input.MaxBatchSize)
+	cfg.Input.MaxBatchCount, err = envToInt(EnvInputMaxBatchCount, 10, 64, cfg.Input.MaxBatchCount)
 	if err != nil {
 		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchSize, err)
 	}

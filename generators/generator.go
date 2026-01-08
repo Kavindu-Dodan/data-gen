@@ -84,9 +84,10 @@ func newGenerator(cfg conf.InputConfig, in input) (*Generator, error) {
 		return nil, fmt.Errorf("failed to parse max runtime: %s", err)
 	}
 
-	// validate for duration & batching to avoid signal spamming
-	if delay == 0 && batchingDuration == 0 && cfg.MaxBatchSize == 0 {
-		return nil, fmt.Errorf("invalid configuration: delay, batching duration, or max size must be greater than zero to avoid tight loop")
+	// Avoid spamming loop if all timing and terminal conditions are zero
+	if batchingDuration == 0 && maxDuration == 0 && cfg.MaxBatchSize == 0 && cfg.MaxBatchCount == 0 && cfg.MaxDataPoints == 0 {
+		return nil, fmt.Errorf("invalid configuration: no batching or terminal conditions specified," +
+			" please configure at least one of batching duration, max batch size, max batch count, max data points, or max runtime")
 	}
 
 	return &Generator{
@@ -138,7 +139,7 @@ func (g *Generator) runGenerator() {
 
 			since := time.Since(lastBatch)
 
-			if g.shouldEmit(since, currentBatchByteSize, totalDataPoints) {
+			if g.shouldEmit(since, currentBatchByteSize, currentBatchDataPoints, totalDataPoints) {
 				b := g.input.GetAndReset()
 				g.dataChan <- &b
 				slog.Debug("Emitted payload", slog.Int64("dataPoints", currentBatchDataPoints))
@@ -174,13 +175,18 @@ func (g *Generator) runGenerator() {
 // Checks are done for,
 // - batching duration
 // - batch size (iff defined)
+// - batch count (iff defined)
 // - max data points (iff defined)
-func (g *Generator) shouldEmit(sinceLastBatch time.Duration, batchSizeBytes int64, dataPointSum int64) bool {
+func (g *Generator) shouldEmit(sinceLastBatch time.Duration, batchSizeBytes int64, batchCount int64, dataPointSum int64) bool {
 	if sinceLastBatch >= g.parsedDurations.batchingDuration {
 		return true
 	}
 
-	if g.config.MaxBatchSize > 0 && batchSizeBytes > g.config.MaxBatchSize {
+	if g.config.MaxBatchSize > 0 && batchSizeBytes >= g.config.MaxBatchSize {
+		return true
+	}
+
+	if g.config.MaxBatchCount > 0 && batchCount >= g.config.MaxBatchCount {
 		return true
 	}
 

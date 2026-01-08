@@ -2,7 +2,6 @@
 
 A flexible synthetic data generator in Go, designed to produce realistic logs and metrics for testing and development.
 
-
 ```mermaid
 ---
 config:
@@ -42,7 +41,8 @@ flowchart LR
 
 ## Quick Start
 
-- Clone the repository (alternatively download a release binary from [releases](https://github.com/Kavindu-Dodan/data-gen/releases))
+- Clone the repository (alternatively download a release binary
+  from [releases](https://github.com/Kavindu-Dodan/data-gen/releases))
 - Copy following to `config.yaml`
   ```yaml
   input:
@@ -56,8 +56,8 @@ flowchart LR
     config:
       verbosity: detailed
   ```
-- Run data generator with one of the following commands, 
-  
+- Run data generator with one of the following commands,
+
   From source,
 
   `go run cmd/main.go --config ./config.yaml`
@@ -80,14 +80,20 @@ Check `config.sample.yaml` for reference.
 
 Given below are supported input types and their related environment variable overrides,
 
-| YAML Property     | Environment Variable        | Default                | Description                                                                                                                                                                                                                                                                   |
-|-------------------|-----------------------------|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`            | `ENV_INPUT_TYPE`            | - (required from user) | Specifies the input data type (eg, `LOGS`, `METRICS`, `ALB`, `NLB`, `VPC`, `CLOUDTRAIL`, `WAF`).                                                                                                                                                                              |
-| `delay`           | `ENV_INPUT_DELAY`           | 1s                     | Delay between a data point. Accepts value in format like `5s` (5 seconds), `10ms` (10 milliseconds).                                                                                                                                                                          |
-| `batching`        | `ENV_INPUT_BATCHING`        | 0 (no batching)        | Set time delay between data batches. Accepts a time value similar to delay. Note: Batching is most effective with bulk ingest endpoints like S3 and Firehose. For CloudWatch Logs, batching may not be suitable as it concatenates multiple log entries into single messages. |
-| `max_batch_size`  | `ENV_INPUT_MAX_BATCH_SIZE`  | 0 (no max batch)       | Set maximum **byte** size of a batch.                                                                                                                                                                                                                                         |
-| `max_data_points` | `ENV_INPUT_MAX_DATA_POINTS` | - (no limit)           | Set maximum amount of data points to generate.                                                                                                                                                                                                                                |
-| `max_runtime`     | `ENV_INPUT_MAX_RUNTIME`     | - (no max runtime)     | Set maximum duration load generator will run.                                                                                                                                                                                                                                 |
+| YAML Property     | Environment Variable        | Default                  | Description                                                                                                                                                                                                                                                                              |
+|-------------------|-----------------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`            | `ENV_INPUT_TYPE`            | - (required from user)   | Specifies the input data type (eg, `LOGS`, `METRICS`, `ALB`, `NLB`, `VPC`, `CLOUDTRAIL`, `WAF`).                                                                                                                                                                                         |
+| `delay`           | `ENV_INPUT_DELAY`           | 1s                       | Delay between a data point. Accepts value in format like `5s` (5 seconds), `10ms` (10 milliseconds).                                                                                                                                                                                     |
+| `batching`        | `ENV_INPUT_BATCHING`        | 0 (no batch duration)    | [Batching] Set time delay between data batches. Accepts a time value similar to delay. Note: Batching is most effective with bulk ingest endpoints like S3 and Firehose. For CloudWatch Logs, batching may not be suitable as it concatenates multiple log entries into single messages. |
+| `max_batch_size`  | `ENV_INPUT_MAX_BATCH_SIZE`  | 0 (no max bytes)         | [Batching] Set maximum **byte** size for a batch.                                                                                                                                                                                                                                        |
+| `max_batch_count` | `ENV_INPUT_MAX_BATCH_COUNT` | 0 (no max element count) | [Batching] Set maximum **element** count for a batch.                                                                                                                                                                                                                                    |                                                                                                                                                                                                                                                                               |
+| `max_data_points` | `ENV_INPUT_MAX_DATA_POINTS` | - (no limit)             | [Runtime] Set maximum amount of data points to generate during runtime.                                                                                                                                                                                                                  |
+| `max_runtime`     | `ENV_INPUT_MAX_RUNTIME`     | - (no max runtime)       | [Runtime] Set the duration for full load generation runtime.                                                                                                                                                                                                                             |
+
+> [!NOTE]
+> You must define one of the terminal conditions for batching ([Batching]) or runtime ([Runtime]).
+> For example, define one of `max_data_points` or `max_runtime` when  `max_batch_size`, `max_batch_count` or `batching` duration is not set.
+> On the other hand, for example when batching duration is set, you can run load generator indefinitely without defining runtime ([Runtime]) limits.
 
 Given below are supported `type` values for input,
 
@@ -212,7 +218,6 @@ output:
     event_hub_name: "<event_hub_name>"
 ```
 
-
 Using with connection string & event hub name (requires IAM role assigned to the role running this application):
 
 ```yaml
@@ -259,7 +264,7 @@ aws:
 
 ### 1. Continuous Log Generation to a S3 bucket
 
-Generate ECS-formatted logs every 2s, batch them in 10 seconds and forward to S3 bucket.
+Generate ECS-formatted log every 2s, batch them in 10 seconds and forward to S3 bucket.
 Default delay is 1s between data points.
 
 ```yaml
@@ -273,9 +278,10 @@ output:
     s3_bucket: "testing-bucket"
 ```
 
-### 2. Continuous Log Generation with batching to a S3 bucket
+### 2. Continuous Log Generation with max batch size based on the batch size based on bytes
 
-Generate ALB logs. No delay between data points (continuous data generating).
+Generate ALB logs. 
+No delay between data points (continuous data generating).
 Limit batching to 10 seconds and max batch size is set to 10MB. This translates to ~1 MB/second data load.
 S3 files will be in `gzip` format.
 
@@ -284,7 +290,7 @@ input:
   type: ALB
   delay: 0s
   batching: 10s
-  max_batch_size: 10_000_000
+  max_batch_size: 10_000_000  # 10 MB max bytes per batch
 output:
   type: s3
   config:
@@ -292,7 +298,27 @@ output:
     compression: "gzip"
 ```
 
-### 3. Limit data points
+### 3. Continuous Log Generation with max batch size based on the number of elements in a batch
+
+Generate WAF logs.
+Delay of 100ms between data points.
+Limit batching to max 1000 elements per batch.
+Send to S3 in `gzip` format.
+
+```yaml
+input:
+  type: WAF
+  delay: 100ms
+  max_batch_count: 1000  # Max 1000 elements per batch
+output:
+  type: s3
+  config:
+    s3_bucket: "testing-bucket"
+    compression: "gzip"
+```
+
+
+### 4. Limit total data points & exit
 
 Generate VPC logs and limit to 200 data points. Then upload it to S3 in `gzip` format.
 
@@ -300,7 +326,7 @@ Generate VPC logs and limit to 200 data points. Then upload it to S3 in `gzip` f
 input:
   type: VPC
   delay: 1s
-  max_data_points: 200
+  max_data_points: 200  # Limit to 200 data points total of the runtime
 output:
   type: s3
   config:
@@ -308,7 +334,7 @@ output:
     compression: "gzip"
 ```
 
-### 4. Limit runtime
+### 5. Limit runtime for 5 minutes & exit
 
 Generate CLOUDTRAIL logs and limit to generator runtime of 5 minutes.
 
