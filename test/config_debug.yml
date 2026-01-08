@@ -1,6 +1,6 @@
 input:
   type: LOGS
-  delay: 500ms
+  delay: 0s
   batching: 2s
   max_batch_size: 500_000
   max_runtime: 5s
