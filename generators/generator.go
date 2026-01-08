@@ -182,7 +182,7 @@ func (g *Generator) shouldEmit(sinceLastBatch time.Duration, batchSizeBytes int6
 		return true
 	}
 
-	if g.config.MaxBatchSize > 0 && batchSizeBytes >= g.config.MaxBatchSize {
+	if g.config.MaxBatchSize > 0 && batchSizeBytes > g.config.MaxBatchSize {
 		return true
 	}
 
