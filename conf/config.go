@@ -13,7 +13,7 @@ import (
 const (
 	defaultProfile     = "default"
 	defaultAWSRegion   = "us-east-1"
-	defaultDelay       = "5s"
+	defaultDelay       = "1s"
 	defaultBatching    = "0s"
 	defaultMaxDuration = "0s"
 
