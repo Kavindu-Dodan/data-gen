@@ -176,9 +176,12 @@ func NewConfig(input []byte) (*Config, error) {
 	cfg.Input.Delay = envOrDefault(EnvInputDelay, cfg.Input.Delay)
 	cfg.Input.Batching = envOrDefault(EnvInputBatching, cfg.Input.Batching)
 	cfg.Input.MaxBatchSize, err = envToInt(EnvInputMaxBatchSize, 10, 64, cfg.Input.MaxBatchSize)
-	cfg.Input.MaxBatchCount, err = envToInt(EnvInputMaxBatchCount, 10, 64, cfg.Input.MaxBatchCount)
 	if err != nil {
 		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchSize, err)
+	}
+	cfg.Input.MaxBatchCount, err = envToInt(EnvInputMaxBatchCount, 10, 64, cfg.Input.MaxBatchCount)
+	if err != nil {
+		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchCount, err)
 	}
 
 	cfg.Input.MaxDataPoints, err = envToInt(EnvInputMaxDataPoints, 10, 64, cfg.Input.MaxDataPoints)
