@@ -278,7 +278,7 @@ output:
     s3_bucket: "testing-bucket"
 ```
 
-### 2. Continuous Log Generation with max batch size based on the batch size based on bytes
+### 2. Continuous Log Generation with max batch size based on bytes
 
 Generate ALB logs. 
 No delay between data points (continuous data generating).
