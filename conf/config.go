@@ -17,13 +17,13 @@ const (
 	defaultBatching    = "0s"
 	defaultMaxDuration = "0s"
 
-	EnvInputType          = "ENV_INPUT_TYPE"
-	EnvInputDelay         = "ENV_INPUT_DELAY"
-	EnvInputBatching      = "ENV_INPUT_BATCHING"
-	EnvInputMaxBatchSize  = "ENV_INPUT_MAX_BATCH_SIZE"
-	EnvInputMaxBatchCount = "ENV_INPUT_MAX_BATCH_COUNT"
-	EnvInputMaxDataPoints = "ENV_INPUT_MAX_DATA_POINTS"
-	EnvMaxRuntime         = "ENV_INPUT_MAX_RUNTIME"
+	EnvInputType             = "ENV_INPUT_TYPE"
+	EnvInputDelay            = "ENV_INPUT_DELAY"
+	EnvInputBatching         = "ENV_INPUT_BATCHING"
+	EnvInputMaxBatchSize     = "ENV_INPUT_MAX_BATCH_SIZE"
+	EnvInputMaxBatchElements = "ENV_INPUT_MAX_BATCH_ELEMENTS"
+	EnvInputMaxDataPoints    = "ENV_INPUT_MAX_DATA_POINTS"
+	EnvMaxRuntime            = "ENV_INPUT_MAX_RUNTIME"
 
 	EnvOutType        = "ENV_OUT_TYPE"
 	EnvOutWait        = "ENV_OUT_WAIT_FOR_COMPLETION"
@@ -94,14 +94,14 @@ func (cfg *Config) UsesAWS() bool {
 
 // InputConfig defines the data generation behavior including type, timing, and limits.
 type InputConfig struct {
-	Type          string    `yaml:"type"`
-	Conf          yaml.Node `yaml:"config"`
-	Delay         string    `yaml:"delay"`
-	Batching      string    `yaml:"batching"`
-	MaxBatchSize  int64     `yaml:"max_batch_size"`
-	MaxBatchCount int64     `yaml:"max_batch_count"`
-	MaxDataPoints int64     `yaml:"max_data_points"`
-	MaxRunTime    string    `yaml:"max_runtime"`
+	Type             string    `yaml:"type"`
+	Conf             yaml.Node `yaml:"config"`
+	Delay            string    `yaml:"delay"`
+	Batching         string    `yaml:"batching"`
+	MaxBatchSize     int64     `yaml:"max_batch_size"`
+	MaxBatchElements int64     `yaml:"max_batch_elements"`
+	MaxDataPoints    int64     `yaml:"max_data_points"`
+	MaxRunTime       string    `yaml:"max_runtime"`
 }
 
 func newDefaultInputConfig() *InputConfig {
@@ -179,9 +179,9 @@ func NewConfig(input []byte) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchSize, err)
 	}
-	cfg.Input.MaxBatchCount, err = envToInt(EnvInputMaxBatchCount, 10, 64, cfg.Input.MaxBatchCount)
+	cfg.Input.MaxBatchElements, err = envToInt(EnvInputMaxBatchElements, 10, 64, cfg.Input.MaxBatchElements)
 	if err != nil {
-		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchCount, err)
+		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchElements, err)
 	}
 
 	cfg.Input.MaxDataPoints, err = envToInt(EnvInputMaxDataPoints, 10, 64, cfg.Input.MaxDataPoints)
