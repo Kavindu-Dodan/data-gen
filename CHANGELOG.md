@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.6.0...v0.7.0) (2026-01-09)
+
+
+### Features
+
+* configuration for max batch count ([#105](https://github.com/Kavindu-Dodan/data-gen/issues/105)) ([0652141](https://github.com/Kavindu-Dodan/data-gen/commit/06521417e168365277a4b5e34d4df3e3f9b99546))
+* improve metrics ([#110](https://github.com/Kavindu-Dodan/data-gen/issues/110)) ([ed08f9c](https://github.com/Kavindu-Dodan/data-gen/commit/ed08f9c120832639689238a9676335db54410f91))
+* wait for export configuration ([#101](https://github.com/Kavindu-Dodan/data-gen/issues/101)) ([b77eca9](https://github.com/Kavindu-Dodan/data-gen/commit/b77eca9c7b6aaf6a05d440b63135f7cf64197ace))
+
 ## [0.6.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.5.0...v0.6.0) (2026-01-05)
 
 
