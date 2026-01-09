@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 )
 
@@ -21,6 +22,8 @@ type MetricsImpl struct {
 	BatchCount   int64     `json:"totalBatches"`
 	ElementCount int64     `json:"totalElements"`
 	BytesCount   int64     `json:"totalBytes"`
+
+	lock sync.Mutex
 }
 
 func newMetricsImpl() Metrics {
@@ -28,25 +31,43 @@ func newMetricsImpl() Metrics {
 }
 
 func (m *MetricsImpl) RecordStart(timestamp time.Time) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
 	m.StartTime = timestamp
 }
 
 func (m *MetricsImpl) RecordEnd(timestamp time.Time) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
 	m.EndTime = timestamp
 }
 
 func (m *MetricsImpl) BatchEmitCount(count int64) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
 	m.BatchCount += count
 }
 
 func (m *MetricsImpl) ElementsSentCount(count int64) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
 	m.ElementCount += count
 }
 
 func (m *MetricsImpl) BytesSentCount(count int64) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
 	m.BytesCount += count
 }
 
 func (m *MetricsImpl) ToJSON() ([]byte, error) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
 	return json.Marshal(m)
 }
