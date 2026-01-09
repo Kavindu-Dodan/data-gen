@@ -85,9 +85,9 @@ func newGenerator(cfg conf.InputConfig, in input) (*Generator, error) {
 	}
 
 	// Avoid spamming loop if all timing and terminal conditions are zero
-	if batchingDuration == 0 && maxDuration == 0 && cfg.MaxBatchSize == 0 && cfg.MaxBatchCount == 0 && cfg.MaxDataPoints == 0 {
+	if batchingDuration == 0 && maxDuration == 0 && cfg.MaxBatchSize == 0 && cfg.MaxBatchElements == 0 && cfg.MaxDataPoints == 0 {
 		return nil, fmt.Errorf("invalid configuration: no batching or terminal conditions specified," +
-			" please configure at least one of batching duration, max batch size, max batch count, max data points, or max runtime")
+			" please configure at least one of batching duration, max batch size, max batch elements, max data points, or max runtime")
 	}
 
 	return &Generator{
@@ -186,7 +186,7 @@ func (g *Generator) shouldEmit(sinceLastBatch time.Duration, batchSizeBytes int6
 		return true
 	}
 
-	if g.config.MaxBatchCount > 0 && batchCount >= g.config.MaxBatchCount {
+	if g.config.MaxBatchElements > 0 && batchCount >= g.config.MaxBatchElements {
 		return true
 	}
 
