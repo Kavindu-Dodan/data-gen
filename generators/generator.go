@@ -1,12 +1,13 @@
 package generators
 
 import (
-	"data-gen/generators/internal"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"data-gen/conf"
+	"data-gen/generators/internal"
+	"data-gen/internal/runtime"
 )
 
 const (
@@ -27,27 +28,30 @@ type input interface {
 	GetAndReset() []byte
 }
 
-func GeneratorFor(config *conf.Config) (*Generator, error) {
-	switch config.Input.Type {
+func GeneratorFor(cfg *conf.Config, runtime runtime.Runtime) (*Generator, error) {
+	var in input
+	switch cfg.Input.Type {
 	case logs:
-		return newGenerator(config.Input, internal.NewLogGenerator())
+		in = internal.NewLogGenerator()
 	case metrics:
-		return newGenerator(config.Input, internal.NewMetricGenerator())
+		in = internal.NewMetricGenerator()
 	case alb:
-		return newGenerator(config.Input, internal.NewALBGen())
+		in = internal.NewALBGen()
 	case nlb:
-		return newGenerator(config.Input, internal.NewNLBGen())
+		in = internal.NewNLBGen()
 	case vpc:
-		return newGenerator(config.Input, internal.NewVPCGen())
+		in = internal.NewVPCGen()
 	case waf:
-		return newGenerator(config.Input, internal.NewWAFGen())
+		in = internal.NewWAFGen()
 	case cloudTrail:
-		return newGenerator(config.Input, internal.NewCloudTrailGen())
+		in = internal.NewCloudTrailGen()
 	case azureResourceLogs:
-		return newGenerator(config.Input, internal.NewAzureResourceLogGen(config.Input))
+		in = internal.NewAzureResourceLogGen(cfg.Input)
+	default:
+		return nil, fmt.Errorf("unknown generator type: %s", cfg.Input.Type)
 	}
 
-	return nil, fmt.Errorf("unknown generator type: %s", config.Input.Type)
+	return newGenerator(cfg.Input, runtime, in)
 }
 
 type parsedDurations struct {
@@ -59,6 +63,7 @@ type parsedDurations struct {
 // Generator orchestrates data generation with batching, timing, and lifecycle management.
 type Generator struct {
 	config          conf.InputConfig
+	runtime         runtime.Runtime
 	parsedDurations parsedDurations
 	input           input
 	dataChan        chan *[]byte
@@ -67,7 +72,7 @@ type Generator struct {
 	shChan          chan struct{}
 }
 
-func newGenerator(cfg conf.InputConfig, in input) (*Generator, error) {
+func newGenerator(cfg conf.InputConfig, rt runtime.Runtime, in input) (*Generator, error) {
 	// validate configs
 	delay, err := time.ParseDuration(cfg.Delay)
 	if err != nil {
@@ -91,7 +96,8 @@ func newGenerator(cfg conf.InputConfig, in input) (*Generator, error) {
 	}
 
 	return &Generator{
-		config: cfg,
+		config:  cfg,
+		runtime: rt,
 		parsedDurations: parsedDurations{
 			delay:            delay,
 			batchingDuration: batchingDuration,
@@ -140,6 +146,10 @@ func (g *Generator) runGenerator() {
 			since := time.Since(lastBatch)
 
 			if g.shouldEmit(since, currentBatchByteSize, currentBatchDataPoints, totalDataPoints) {
+				g.runtime.MetricsRecorder().BatchEmitCount(1)
+				g.runtime.MetricsRecorder().BytesSentCount(currentBatchByteSize)
+				g.runtime.MetricsRecorder().ElementsSentCount(currentBatchDataPoints)
+
 				b := g.input.GetAndReset()
 				g.dataChan <- &b
 				slog.Debug("Emitted payload", slog.Int64("dataPoints", currentBatchDataPoints))
