@@ -9,6 +9,7 @@ import (
 
 	"data-gen/conf"
 	"data-gen/exporters/internal"
+	"data-gen/internal/runtime"
 )
 
 const (
@@ -26,7 +27,7 @@ type output interface {
 	Send(*[]byte) error
 }
 
-func ExporterFor(ctx context.Context, cfg *conf.Config) (*Exporter, error) {
+func ExporterFor(ctx context.Context, cfg *conf.Config, runtime runtime.Runtime) (*Exporter, error) {
 	var exporter output
 	var err error
 
@@ -66,12 +67,13 @@ func ExporterFor(ctx context.Context, cfg *conf.Config) (*Exporter, error) {
 		return nil, fmt.Errorf("unknown output type: %s", cfg.Output.Type)
 	}
 
-	return newExporter(cfg, exporter), nil
+	return newExporter(cfg, runtime, exporter), nil
 }
 
 // Exporter manages the lifecycle of sending generated data to configured outputs.
 type Exporter struct {
 	cfg     *conf.Config
+	runtime runtime.Runtime
 	output  output
 	errChan chan error
 	shChan  chan struct{}
@@ -79,9 +81,10 @@ type Exporter struct {
 	sending sync.Mutex
 }
 
-func newExporter(cfg *conf.Config, output output) *Exporter {
+func newExporter(cfg *conf.Config, rt runtime.Runtime, output output) *Exporter {
 	return &Exporter{
 		cfg:     cfg,
+		runtime: rt,
 		output:  output,
 		errChan: make(chan error, 2),
 		shChan:  make(chan struct{}),
