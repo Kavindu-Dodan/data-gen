@@ -68,8 +68,27 @@ flowchart LR
 
 Observe the terminal for generated logs.
 
-> [!TIP]
-> Use `--debug` flag for debug level logs.
+## Commands
+
+Following program commands are supported,
+
+- `--config <file_path>` : Path to configuration file. Default is `./config.yaml`.
+- `--metrics <file_path>` : Path to write internal metrics. If ignored, metrics will be logged to console. (see supported metrics below) 
+- `--debug` : Enable debug mode for verbose logging.
+
+For example, to run with a custom config file at `./myconfig.yaml`, writing internal metrics to `metrics.json` at end and enabling debug mode,
+
+```shell
+./dataGenerator_darwin_arm64 --config ./myconfig.yaml --metrics ./metrics.json --debug
+```
+
+List below explains supported internal metrics.
+
+- `startTime` : Timestamp when the generator started.
+- `endTime` : Timestamp when the generator ended.
+- `totalBatches` : Total number of batches exported.
+- `totalElements` : Total number of data elements generated.
+- `totalBytes` : Total number of bytes generated.
 
 ## Configurations
 
