@@ -2,16 +2,17 @@ package main
 
 import (
 	"context"
+	"data-gen/conf"
+	"data-gen/exporters"
+	"data-gen/generators"
+	"data-gen/internal/runtime"
 	"flag"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"data-gen/conf"
-	"data-gen/exporters"
-	"data-gen/generators"
+	"time"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 		return
 	}
 
-	configurations, err := conf.NewConfig(b)
+	cfg, err := conf.NewConfig(b)
 	if err != nil {
 		slog.Error("Config file parsing error", "error", err)
 		return
@@ -51,13 +52,18 @@ func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, opts)))
 
 	slog.Info("Starting data generator")
-	slog.Info("Input", "config", configurations.Input.Print())
-	slog.Info("Output", "config", configurations.Output.Print())
-	if configurations.UsesAWS() {
-		slog.Info("AWS", "config", configurations.AWSCfg.Print())
+	slog.Info("Input", "config", cfg.Input.Print())
+	slog.Info("Output", "config", cfg.Output.Print())
+	if cfg.UsesAWS() {
+		slog.Info("AWS", "config", cfg.AWSCfg.Print())
 	}
 
-	err = run(ctx, signalStop, configurations)
+	rt := runtime.NewRuntime()
+
+	rt.MetricsRecorder().RecordStart(time.Now())
+	defer finalize(rt, args)
+
+	err = run(ctx, cfg, rt, signalStop)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Runtime error: %s", err.Error()))
 		return
@@ -66,13 +72,13 @@ func main() {
 
 // run starts the data generator and exporter based on the provided configuration.
 // This is a blocking call that runs until a termination signal is received or an error occurs.
-func run(ctx context.Context, sigStop context.CancelFunc, cfg *conf.Config) error {
-	generator, err := generators.GeneratorFor(cfg)
+func run(ctx context.Context, cfg *conf.Config, rt runtime.Runtime, sigStop context.CancelFunc) error {
+	generator, err := generators.GeneratorFor(cfg, rt)
 	if err != nil {
 		return fmt.Errorf("error creating generator: %s", err.Error())
 	}
 
-	exporter, err := exporters.ExporterFor(ctx, cfg)
+	exporter, err := exporters.ExporterFor(ctx, cfg, rt)
 	if err != nil {
 		return fmt.Errorf("error creating exporter: %s", err.Error())
 	}
@@ -102,15 +108,40 @@ func run(ctx context.Context, sigStop context.CancelFunc, cfg *conf.Config) erro
 type flags struct {
 	configPath string
 	debug      bool
+	statsPath  string
 }
 
 func parseArgs() flags {
 	cfgPath := flag.String("config", "./config.yaml", "configuration file. Default to `./config.yaml`")
 	debug := flag.Bool("debug", false, "enable debug logging")
+	statsPath := flag.String("metrics", "", "path to write runtime metrics stats (optional)")
 	flag.Parse()
 
 	return flags{
 		configPath: *cfgPath,
 		debug:      *debug,
+		statsPath:  *statsPath,
+	}
+}
+
+// finalize perform final actions such as recording and saving runtime metrics.
+func finalize(rt runtime.Runtime, args flags) {
+	rt.MetricsRecorder().RecordEnd(time.Now())
+
+	json, err := rt.MetricsRecorder().ToJSON()
+	if err != nil {
+		slog.Warn("Could not serialize runtime metrics to JSON", "error", err)
+		return
+	}
+
+	if args.statsPath == "" {
+		slog.Info("Runtime Metrics", "metrics", string(json))
+		return
+	}
+
+	err = os.WriteFile(args.statsPath, json, 0644)
+	if err != nil {
+		slog.Error("Could not write runtime metrics to file", "error", err, "file", args.statsPath)
+		return
 	}
 }
