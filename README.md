@@ -80,15 +80,15 @@ Check `config.sample.yaml` for reference.
 
 Given below are supported input types and their related environment variable overrides,
 
-| YAML Property        | Environment Variable           | Default                  | Description                                                                                                                                                                                                                                                                              |
-|----------------------|--------------------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`               | `ENV_INPUT_TYPE`               | - (required from user)   | Specifies the input data type (eg, `LOGS`, `METRICS`, `ALB`, `NLB`, `VPC`, `CLOUDTRAIL`, `WAF`).                                                                                                                                                                                         |
-| `delay`              | `ENV_INPUT_DELAY`              | 1s                       | Delay between a data point. Accepts value in format like `5s` (5 seconds), `10ms` (10 milliseconds).                                                                                                                                                                                     |
-| `batching`           | `ENV_INPUT_BATCHING`           | 0 (no batch duration)    | [Batching] Set time delay between data batches. Accepts a time value similar to delay. Note: Batching is most effective with bulk ingest endpoints like S3 and Firehose. For CloudWatch Logs, batching may not be suitable as it concatenates multiple log entries into single messages. |
-| `max_batch_size`     | `ENV_INPUT_MAX_BATCH_SIZE`     | 0 (no max bytes)         | [Batching] Set maximum **byte** size for a batch.                                                                                                                                                                                                                                        |
-| `max_batch_elements` | `ENV_INPUT_MAX_BATCH_ELEMENTS` | 0 (no max element count) | [Batching] Set maximum **element** count for a batch.                                                                                                                                                                                                                                    |                                                                                                                                                                                                                                                                               |
-| `max_data_points`    | `ENV_INPUT_MAX_DATA_POINTS`    | - (no limit)             | [Runtime] Set maximum amount of data points to generate during runtime.                                                                                                                                                                                                                  |
-| `max_runtime`        | `ENV_INPUT_MAX_RUNTIME`        | - (no max runtime)       | [Runtime] Set the duration for full load generation runtime.                                                                                                                                                                                                                             |
+| YAML Property        | Environment Variable           | Default                  | Description                                                                                                                                                          |
+|----------------------|--------------------------------|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`               | `ENV_INPUT_TYPE`               | - (required from user)   | Specifies the input data type (eg, `LOGS`, `METRICS`, `ALB`, `NLB`, `VPC`, `CLOUDTRAIL`, `WAF`).                                                                     |
+| `delay`              | `ENV_INPUT_DELAY`              | 1s                       | Delay between a data point. Accepts value in format like `5s` (5 seconds), `10ms` (10 milliseconds).                                                                 |
+| `batching`           | `ENV_INPUT_BATCHING`           | 0 (no batch duration)    | [Batching] Set time delay between data batches. Accepts a time value similar to **delay**. The generated data batch get forwarded to output when this target is met. |
+| `max_batch_size`     | `ENV_INPUT_MAX_BATCH_SIZE`     | 0 (no max bytes)         | [Batching] Set maximum **byte** size for a batch. The generated data batch get forwarded to output when this target is met.                                          |
+| `max_batch_elements` | `ENV_INPUT_MAX_BATCH_ELEMENTS` | 0 (no max element count) | [Batching] Set maximum **element** count for a batch. The generated data batch get forwarded to output when this target is met.                                      |                                                                                                                                                                                                                                                                               |
+| `max_data_points`    | `ENV_INPUT_MAX_DATA_POINTS`    | - (no limit)             | [Runtime] Set maximum amount of data points (**elements**) to generate during runtime. Program exist once this target is met.                                        |
+| `max_runtime`        | `ENV_INPUT_MAX_RUNTIME`        | - (no max runtime)       | [Runtime] Set the duration for full load generation runtime. Program exist once this target is met.                                                                  |
 
 > [!NOTE]
 > You must define one of the terminal conditions for batching ([Batching]) or runtime ([Runtime]).
@@ -126,10 +126,10 @@ input:
 
 Given below are supported output configurations and their related environment variable overrides,
 
-| YAML Property         | Environment Variable          | Description                                                                |
-|-----------------------|-------------------------------|----------------------------------------------------------------------------|
-| `type`                | `ENV_OUT_TYPE`                | Accepts the output type (see table below)                                  |
-| `wait_for_completion` | `ENV_OUT_WAIT_FOR_COMPLETION` | Wait for output exports to complete when shutting down. Default is `true`. |
+| YAML Property         | Environment Variable          | Default                       | Description                                                                |
+|-----------------------|-------------------------------|-------------------------------|----------------------------------------------------------------------------|
+| `type`                | `ENV_OUT_TYPE`                | - (Mandatory custom property) | Accepts the output type (see table below)                                  |
+| `wait_for_completion` | `ENV_OUT_WAIT_FOR_COMPLETION` | true                          | Wait for output exports to complete when shutting down. Default is `true`. |
 
 Given below are supported output types,
 
