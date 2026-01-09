@@ -94,14 +94,14 @@ func (cfg *Config) UsesAWS() bool {
 
 // InputConfig defines the data generation behavior including type, timing, and limits.
 type InputConfig struct {
-	Type          string    `yaml:"type"`
-	Conf          yaml.Node `yaml:"config"`
-	Delay         string    `yaml:"delay"`
-	Batching      string    `yaml:"batching"`
-	MaxBatchSize  int64     `yaml:"max_batch_size"`
-	MaxBatchCount int64     `yaml:"max_batch_elements"`
-	MaxDataPoints int64     `yaml:"max_data_points"`
-	MaxRunTime    string    `yaml:"max_runtime"`
+	Type             string    `yaml:"type"`
+	Conf             yaml.Node `yaml:"config"`
+	Delay            string    `yaml:"delay"`
+	Batching         string    `yaml:"batching"`
+	MaxBatchSize     int64     `yaml:"max_batch_size"`
+	MaxBatchElements int64     `yaml:"max_batch_elements"`
+	MaxDataPoints    int64     `yaml:"max_data_points"`
+	MaxRunTime       string    `yaml:"max_runtime"`
 }
 
 func newDefaultInputConfig() *InputConfig {
@@ -179,7 +179,7 @@ func NewConfig(input []byte) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchSize, err)
 	}
-	cfg.Input.MaxBatchCount, err = envToInt(EnvInputMaxBatchElements, 10, 64, cfg.Input.MaxBatchCount)
+	cfg.Input.MaxBatchElements, err = envToInt(EnvInputMaxBatchElements, 10, 64, cfg.Input.MaxBatchElements)
 	if err != nil {
 		return nil, fmt.Errorf("invalid value for %s: %w", EnvInputMaxBatchElements, err)
 	}
