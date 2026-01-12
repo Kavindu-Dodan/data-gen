@@ -81,7 +81,7 @@ func (s *S3BucketExporter) Send(data *[]byte) error {
 	var content io.Reader
 	var encoding string
 
-	key := fmt.Sprintf("%s%s", s.cfg.PathPrefix, time.Now().Format("2006-01-02_15-04-05"))
+	key := fmt.Sprintf("%s%s", s.cfg.PathPrefix, time.Now().Format("2006-01-02T15:04:05.000"))
 
 	// check and compress
 	if s.cfg.Compression == "gzip" {
