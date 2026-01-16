@@ -28,6 +28,7 @@ var regions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-c
 var s3EventNames = []string{"PutObject", "GetObject", "DeleteObject", "ListObjects"}
 var sampleAccountIDs = []string{"123456789012", "987654321098", "111122223333", "444455556666", "777788889999"}
 var sampleDomains = []string{"example.com", "test.com", "sample.org", "demo.net"}
+var sampleENIIDs = []string{"eni-12345678", "eni-87654321", "eni-11223344", "eni-44332211"}
 var samplePrincipalIDs = []string{"AID1234567890", "AID0987654321", "AID1111222233", "AID7777888899"}
 var sampleRuleIDs = []string{"rule-1", "rule-2", "rule-3", "rule-4", "rule-5"}
 var statuses = []string{"200", "400", "500"}
@@ -36,7 +37,6 @@ var tlsProtocols = []string{"TLSv1.2", "TLSv1.3"}
 var uriPaths = []string{"/", "/home", "/api/resource", "/login"}
 var userAgents = []string{"Mozilla/5.0, AppleWebKit/537.36, Chrome/58.0.3029.110, Safari/537.3", "curl/7.46.0", "cloudtrail.amazonaws.com", "firehose.amazonaws.com"}
 var uuids = []string{"550e8400-e29b-41d4-a716-446655440000", "123e4567-e89b-12d3-a456-426614174000", "9b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"}
-var vpcActions = []string{"ACCEPT", "REJECT"}
 var wafActions = []string{"ALLOW", "BLOCK", "COUNT"}
 var wafRuleTypes = []string{"REGULAR", "RATE_BASED", "GROUP"}
 var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
@@ -101,7 +101,17 @@ func randomSSLCipher() string {
 }
 
 func randomVPCAction() string {
-	return vpcActions[rand.Intn(len(vpcActions))]
+	if rand.Intn(10) < 1 {
+		// 10% chance of REJECT
+		return "REJECT"
+	}
+
+	// 90% chance of ACCEPT
+	return "ACCEPT"
+}
+
+func randomENIID() string {
+	return sampleENIIDs[rand.Intn(len(sampleENIIDs))]
 }
 
 func randomIP() string {

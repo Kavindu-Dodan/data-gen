@@ -31,7 +31,7 @@ func (v *VPCGen) Generate() (int64, error) {
 	customizer := vpcCustomizer{
 		Version:     2,
 		AccountID:   randomSampleAccountID(),
-		InterfaceID: "eni-123456789123",
+		InterfaceID: randomENIID(),
 		SrcAddr:     randomIP(),
 		DstAddr:     randomIP(),
 		SrcPort:     randomPort(),
