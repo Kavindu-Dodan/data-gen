@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.7.0...v0.8.0) (2026-01-16)
+
+
+### Features
+
+* improve VPC flow log distribution ([#119](https://github.com/Kavindu-Dodan/data-gen/issues/119)) ([570b4aa](https://github.com/Kavindu-Dodan/data-gen/commit/570b4aac1547a6e7df2d3a8471ea6eba7a7c5f0c))
+
 ## [0.7.0](https://github.com/Kavindu-Dodan/data-gen/compare/v0.6.0...v0.7.0) (2026-01-09)
 
 
