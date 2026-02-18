@@ -40,6 +40,8 @@ var uuids = []string{"550e8400-e29b-41d4-a716-446655440000", "123e4567-e89b-12d3
 var wafActions = []string{"ALLOW", "BLOCK", "COUNT"}
 var wafRuleTypes = []string{"REGULAR", "RATE_BASED", "GROUP"}
 var wafSampleHTTPSourceNames = []string{"ALB", "CloudFront", "API Gateway"}
+var firstNames = []string{"John", "Jane", "Michael", "Sarah", "David", "Emily", "Robert", "Lisa", "William", "Anna"}
+var lastNames = []string{"Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Wilson"}
 
 var errorCodeMessageCombo = map[string]string{
 	"AccessDenied":    "User is not authorized to perform iam:CreateUser on resource",
@@ -557,4 +559,10 @@ func randomAzureServicePrincipal(category string) string {
 	default:
 		return "AzureMonitor"
 	}
+}
+
+func randomAzureUserName() string {
+	firstName := firstNames[rand.Intn(len(firstNames))]
+	lastName := lastNames[rand.Intn(len(lastNames))]
+	return fmt.Sprintf("%s %s", firstName, lastName)
 }

@@ -74,8 +74,6 @@ func (a *AzureResourceLogGen) Generate() (int64, error) {
 		return 0, err
 	}
 
-	// fmt.Printf("Generated batch of %d Azure resource logs (total size: %d bytes)\n", a.cfg.RecordsPerBatch, len(marshaled))
-
 	return a.buf.size(), nil
 }
 
@@ -155,6 +153,9 @@ func buildAzureResourceLog() azureResourceLog {
 	// other categories use only a minimal claims block.
 	if shouldHaveFullIdentity(category) {
 		subscriptionID := randomAzureGUID()
+
+		now := time.Now().Unix()
+
 		log.Identity = &azureIdentity{
 			Authorization: &azureAuthorization{
 				Scope:  randomAzureResourceID(),
@@ -171,10 +172,10 @@ func buildAzureResourceLog() azureResourceLog {
 			Claims: map[string]string{
 				"aud":    "https://management.core.windows.net/",
 				"iss":    "https://sts.windows.net/" + randomAzureGUID() + "/",
-				"iat":    "1744711621",
-				"nbf":    "1744711621",
-				"exp":    "1744717084",
-				"name":   "John Doe",
+				"iat":    strconv.FormatInt(now-int64(rand.Intn(300)), 10), // issued up to 5 min ago
+				"nbf":    strconv.FormatInt(now, 10),                       // not valid before now
+				"exp":    strconv.FormatInt(now+int64(3600), 10),           // expires in 1 hour
+				"name":   randomAzureUserName(),
 				"ipaddr": randomIP(),
 			},
 		}
@@ -217,7 +218,7 @@ func generateAzureProperties(category, operationName string) map[string]interfac
 
 	case "Security":
 		// securityLogProperties: accountLogonId, commandLine, domainName,
-		// parentProcess, parentProcess id, processId, processName,
+		// parentProcess, parentProcessid, processId, processName,
 		// userName, UserSID, ActionTaken, Severity
 		processName := fmt.Sprintf("c:\\windows\\system32\\%s.exe", randomAZaz09String(6))
 		props["eventCategory"] = "Security"
