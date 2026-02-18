@@ -366,13 +366,6 @@ var azureAdminActions = []string{
 	"MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/WRITE",
 	"MICROSOFT.KEYVAULT/VAULTS/WRITE",
 }
-var azureActions = []string{
-	"Microsoft.Storage/storageAccounts/write",
-	"Microsoft.Storage/storageAccounts/read",
-	"Microsoft.Compute/virtualMachines/start/action",
-	"Microsoft.Network/networkSecurityGroups/securityRules/write",
-	"Microsoft.Web/sites/write",
-}
 var azureRoles = []string{"Owner", "Contributor", "Reader", "Storage Blob Data Contributor", "Virtual Machine Contributor"}
 var azureSecurityAlertOperations = []string{
 	"MICROSOFT.SECURITY/LOCATIONS/ALERTS/ACTIVATE/ACTION",
@@ -381,8 +374,6 @@ var azureSecurityAlertOperations = []string{
 }
 var azureSecuritySeverities = []string{"High", "Medium", "Low", "Informational"}
 var azureSecurityActionsTaken = []string{"Detected", "Blocked", "Audited"}
-var azureProtocols = []string{"TCP", "UDP", "ICMP"}
-var azureDirections = []string{"Inbound", "Outbound"}
 var azureIncidentTypes = []string{"Incident", "Maintenance", "InformationalAction", "ActionRequired", "Security"}
 var azureServiceNames = []string{"App Service", "Azure SQL Database", "Storage", "Virtual Machines", "Azure Kubernetes Service", "Azure Active Directory"}
 var azureHealthStatuses = []string{"Available", "Unavailable", "Degraded", "Unknown"}
@@ -486,10 +477,6 @@ func randomAzureOperationName(category string) string {
 	}
 }
 
-func randomAzureAction() string {
-	return azureActions[rand.Intn(len(azureActions))]
-}
-
 func randomAzureRole() string {
 	return azureRoles[rand.Intn(len(azureRoles))]
 }
@@ -571,15 +558,3 @@ func randomAzureServicePrincipal(category string) string {
 	}
 }
 
-func randomAzureStorageAccount() string {
-	return fmt.Sprintf("storage%s", randomAZaz09String(8))
-}
-
-func randomBlobPath() string {
-	return fmt.Sprintf("container-%s/blob-%s.txt", randomAZaz09String(4), randomAZaz09String(6))
-}
-
-func randomHTTPStatusCode() int {
-	codes := []int{200, 201, 204, 400, 401, 403, 404, 500, 503}
-	return codes[rand.Intn(len(codes))]
-}
