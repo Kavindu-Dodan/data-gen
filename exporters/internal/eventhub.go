@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -73,24 +75,55 @@ func NewEventHubExporter(ctx context.Context, c *conf.Config) (*EventHubExporter
 	}, nil
 }
 
+// Send delivers data to Event Hubs. The generator accumulates multiple
+// {"records": [...]} objects separated by newlines (NDJSON). Each line is
+// sent as its own EventData so that no individual message exceeds the 1 MB
+// Event Hubs limit. Lines are packed into batches; when a batch is full the
+// SDK returns ErrEventDataTooLarge, at which point the batch is flushed and a
+// new one is started for the remaining lines.
 func (e *EventHubExporter) Send(data *[]byte) error {
-	batch, err := e.producer.NewEventDataBatch(context.Background(), nil)
+	ctx := context.Background()
+
+	lines := bytes.Split(bytes.TrimRight(*data, "\n"), []byte("\n"))
+
+	batch, err := e.producer.NewEventDataBatch(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create event batch: %w", err)
 	}
 
-	event := &azeventhubs.EventData{
-		Body: *data,
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+
+		err = batch.AddEventData(&azeventhubs.EventData{Body: line}, nil)
+		if errors.Is(err, azeventhubs.ErrEventDataTooLarge) {
+			// The batch is full — flush it before adding the current line.
+			if batch.NumEvents() == 0 {
+				// A single record is larger than the batch limit; nothing we can do.
+				return fmt.Errorf("single record (%d bytes) exceeds Event Hubs message size limit", len(line))
+			}
+			if err = e.producer.SendEventDataBatch(ctx, batch, nil); err != nil {
+				return fmt.Errorf("failed to send event batch to %s: %w", e.cfg.EventHubName, err)
+			}
+			batch, err = e.producer.NewEventDataBatch(ctx, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create event batch: %w", err)
+			}
+			// Retry the line that did not fit in the previous batch.
+			if err = batch.AddEventData(&azeventhubs.EventData{Body: line}, nil); err != nil {
+				return fmt.Errorf("failed to add event to fresh batch: %w", err)
+			}
+		} else if err != nil {
+			return fmt.Errorf("failed to add event to batch: %w", err)
+		}
 	}
 
-	err = batch.AddEventData(event, nil)
-	if err != nil {
-		return fmt.Errorf("failed to add event to batch: %w", err)
-	}
-
-	err = e.producer.SendEventDataBatch(context.Background(), batch, nil)
-	if err != nil {
-		return fmt.Errorf("failed to send event to event hub %s: %w", e.cfg.EventHubName, err)
+	// Flush any lines that remain in the last batch.
+	if batch.NumEvents() > 0 {
+		if err = e.producer.SendEventDataBatch(ctx, batch, nil); err != nil {
+			return fmt.Errorf("failed to send event batch to %s: %w", e.cfg.EventHubName, err)
+		}
 	}
 
 	return nil
