@@ -325,8 +325,19 @@ func randomLogString(size int) string {
 // Azure-specific randomizers
 
 var azureRegions = []string{"eastus", "westus", "centralus", "northeurope", "westeurope", "southeastasia", "japaneast", "australiaeast"}
-var azureCategories = []string{"Administrative", "Security", "ServiceHealth", "ResourceHealth", "Alert", "Recommendation", "Policy", "StorageRead", "StorageWrite", "StorageDelete"}
-var azureResultTypes = []string{"Success", "Failure", "Start", "Accept"}
+// azureCategories mirrors the eight activity log categories supported by the
+// opentelemetry-collector-contrib azurelogs translator.
+var azureCategories = []string{
+	"Administrative",
+	"Security",
+	"ServiceHealth",
+	"ResourceHealth",
+	"Alert",
+	"Recommendation",
+	"Policy",
+	"Autoscale",
+}
+var azureResultTypes = []string{"Success", "Failure", "Start", "Accept", "Resolved", "Active", "Succeeded"}
 var azureLogLevels = []string{"Informational", "Warning", "Error", "Critical"}
 var azureErrorCodes = []string{"Forbidden", "Unauthorized", "BadRequest", "NotFound", "Conflict", "InternalServerError"}
 var azureErrorDescriptions = []string{
@@ -344,15 +355,66 @@ var azureResourceTypes = []string{
 	"Microsoft.KeyVault/vaults",
 	"Microsoft.Web/sites",
 	"Microsoft.Sql/servers",
+	"Microsoft.Insights/autoscaleSettings",
+	"Microsoft.ClassicCompute/domainNames",
 }
-var azureActions = []string{"Microsoft.Storage/storageAccounts/write", "Microsoft.Storage/storageAccounts/read", "Microsoft.Compute/virtualMachines/start/action", "Microsoft.Network/networkSecurityGroups/securityRules/write"}
+var azureAdminActions = []string{
+	"MICROSOFT.INSIGHTS/DIAGNOSTICSETTINGS/WRITE",
+	"MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE",
+	"MICROSOFT.RESOURCES/DEPLOYMENTS/WRITE",
+	"MICROSOFT.COMPUTE/VIRTUALMACHINES/WRITE",
+	"MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/WRITE",
+	"MICROSOFT.KEYVAULT/VAULTS/WRITE",
+}
+var azureActions = []string{
+	"Microsoft.Storage/storageAccounts/write",
+	"Microsoft.Storage/storageAccounts/read",
+	"Microsoft.Compute/virtualMachines/start/action",
+	"Microsoft.Network/networkSecurityGroups/securityRules/write",
+	"Microsoft.Web/sites/write",
+}
 var azureRoles = []string{"Owner", "Contributor", "Reader", "Storage Blob Data Contributor", "Virtual Machine Contributor"}
-var azureSecurityEventTypes = []string{"NetworkSecurityGroupRuleCounter", "NetworkSecurityGroupFlowEvent", "MaliciousFlow", "UnusualPortActivity"}
+var azureSecurityAlertOperations = []string{
+	"MICROSOFT.SECURITY/LOCATIONS/ALERTS/ACTIVATE/ACTION",
+	"MICROSOFT.SECURITY/LOCATIONS/ALERTS/RESOLVE/ACTION",
+	"MICROSOFT.SECURITY/LOCATIONS/ALERTS/DISMISS/ACTION",
+}
+var azureSecuritySeverities = []string{"High", "Medium", "Low", "Informational"}
+var azureSecurityActionsTaken = []string{"Detected", "Blocked", "Audited"}
 var azureProtocols = []string{"TCP", "UDP", "ICMP"}
 var azureDirections = []string{"Inbound", "Outbound"}
-var azureIncidentTypes = []string{"ServiceIssue", "PlannedMaintenance", "HealthAdvisory", "SecurityAdvisory"}
+var azureIncidentTypes = []string{"Incident", "Maintenance", "InformationalAction", "ActionRequired", "Security"}
+var azureServiceNames = []string{"App Service", "Azure SQL Database", "Storage", "Virtual Machines", "Azure Kubernetes Service", "Azure Active Directory"}
 var azureHealthStatuses = []string{"Available", "Unavailable", "Degraded", "Unknown"}
 var azureHealthCauses = []string{"PlatformInitiated", "UserInitiated", "Unknown"}
+var azureHealthTypes = []string{"Downtime", "Degraded", "Unknown"}
+var azureRecommendationCategories = []string{"HighAvailability", "Security", "Performance", "Cost", "OperationalExcellence"}
+var azureRecommendationImpacts = []string{"High", "Medium", "Low"}
+var azureRecommendationNames = []string{
+	"Consider having at least two origins",
+	"Enable geo-replication for storage accounts",
+	"Enable soft delete for blobs",
+	"Configure backup for virtual machines",
+	"Enable Azure Defender for SQL",
+}
+var azureRecommendationTypes = []string{
+	"589ab0b0-1362-44fd-8551-0e7847767600",
+	"e81d30b7-3bff-4d5e-98b6-a7e5c5f5c7c3",
+	"7a02d6d5-3a5e-4b1e-9d5d-2e5c1f5e7c3f",
+}
+var azurePolicyDefinitionIDs = []string{
+	"/providers/Microsoft.Authorization/policyDefinitions/2b9ad585-36bc-4615-b300-fd4435808332",
+	"/providers/Microsoft.Authorization/policyDefinitions/1e66c121-a66a-4b1f-9b83-0fd99bf0fc2d",
+	"/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9",
+}
+var azureAlertMetricNames = []string{"Disk read", "CPU Percentage", "Memory Percentage", "Network In", "Network Out"}
+var azureAlertOperators = []string{"GreaterThan", "LessThan", "GreaterThanOrEqual", "LessThanOrEqual"}
+var azureAlertAggregations = []string{"Average", "Total", "Minimum", "Maximum", "Count"}
+var azureAutoscaleOperations = []string{
+	"MICROSOFT.INSIGHTS/AUTOSCALESETTINGS/SCALEUP/ACTION",
+	"MICROSOFT.INSIGHTS/AUTOSCALESETTINGS/SCALEDOWN/ACTION",
+	"MICROSOFT.INSIGHTS/AUTOSCALESETTINGS/SCALEUPRAPID/ACTION",
+}
 
 func randomAzureRegion() string {
 	return azureRegions[rand.Intn(len(azureRegions))]
@@ -404,17 +466,23 @@ func randomDurationMs() int {
 func randomAzureOperationName(category string) string {
 	switch category {
 	case "Administrative":
-		return azureActions[rand.Intn(len(azureActions))]
+		return azureAdminActions[rand.Intn(len(azureAdminActions))]
 	case "Security":
-		return "Microsoft.Network/networkSecurityGroups/securityRules/action"
-	case "StorageRead":
-		return "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
-	case "StorageWrite":
-		return "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
-	case "StorageDelete":
-		return "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete"
+		return azureSecurityAlertOperations[rand.Intn(len(azureSecurityAlertOperations))]
+	case "ServiceHealth":
+		return "Microsoft.ServiceHealth/maintenance/action"
+	case "ResourceHealth":
+		return "Microsoft.Resourcehealth/healthevent/Activated/action"
+	case "Alert":
+		return "MICROSOFT.INSIGHTS/ALERTRULES/RESOLVED/ACTION"
+	case "Recommendation":
+		return "Microsoft.Advisor/recommendations/available/action"
+	case "Policy":
+		return "MICROSOFT.AUTHORIZATION/POLICIES/AUDIT/ACTION"
+	case "Autoscale":
+		return azureAutoscaleOperations[rand.Intn(len(azureAutoscaleOperations))]
 	default:
-		return azureActions[rand.Intn(len(azureActions))]
+		return azureAdminActions[rand.Intn(len(azureAdminActions))]
 	}
 }
 
@@ -426,20 +494,20 @@ func randomAzureRole() string {
 	return azureRoles[rand.Intn(len(azureRoles))]
 }
 
-func randomAzureSecurityEventType() string {
-	return azureSecurityEventTypes[rand.Intn(len(azureSecurityEventTypes))]
+func randomAzureSecuritySeverity() string {
+	return azureSecuritySeverities[rand.Intn(len(azureSecuritySeverities))]
 }
 
-func randomAzureProtocol() string {
-	return azureProtocols[rand.Intn(len(azureProtocols))]
-}
-
-func randomAzureDirection() string {
-	return azureDirections[rand.Intn(len(azureDirections))]
+func randomAzureSecurityActionTaken() string {
+	return azureSecurityActionsTaken[rand.Intn(len(azureSecurityActionsTaken))]
 }
 
 func randomAzureIncidentType() string {
 	return azureIncidentTypes[rand.Intn(len(azureIncidentTypes))]
+}
+
+func randomAzureServiceName() string {
+	return azureServiceNames[rand.Intn(len(azureServiceNames))]
 }
 
 func randomAzureHealthStatus() string {
@@ -448,6 +516,59 @@ func randomAzureHealthStatus() string {
 
 func randomAzureHealthCause() string {
 	return azureHealthCauses[rand.Intn(len(azureHealthCauses))]
+}
+
+func randomAzureHealthType() string {
+	return azureHealthTypes[rand.Intn(len(azureHealthTypes))]
+}
+
+func randomAzureRecommendationCategory() string {
+	return azureRecommendationCategories[rand.Intn(len(azureRecommendationCategories))]
+}
+
+func randomAzureRecommendationImpact() string {
+	return azureRecommendationImpacts[rand.Intn(len(azureRecommendationImpacts))]
+}
+
+func randomAzureRecommendationName() string {
+	return azureRecommendationNames[rand.Intn(len(azureRecommendationNames))]
+}
+
+func randomAzureRecommendationType() string {
+	return azureRecommendationTypes[rand.Intn(len(azureRecommendationTypes))]
+}
+
+func randomAzurePolicyDefinitionID() string {
+	return azurePolicyDefinitionIDs[rand.Intn(len(azurePolicyDefinitionIDs))]
+}
+
+func randomAzureAlertMetricName() string {
+	return azureAlertMetricNames[rand.Intn(len(azureAlertMetricNames))]
+}
+
+func randomAzureAlertOperator() string {
+	return azureAlertOperators[rand.Intn(len(azureAlertOperators))]
+}
+
+func randomAzureAlertAggregation() string {
+	return azureAlertAggregations[rand.Intn(len(azureAlertAggregations))]
+}
+
+// randomAzureServicePrincipal returns a plausible service-principal claim value
+// for the "spn" claims key in minimal identity objects.
+func randomAzureServicePrincipal(category string) string {
+	switch category {
+	case "Alert":
+		return "Microsoft.Insights/alertRules"
+	case "Autoscale":
+		return "Microsoft.Insights/autoscaleSettings"
+	case "Recommendation":
+		return "Microsoft.Advisor"
+	case "ServiceHealth":
+		return "AcmClient@microsoft.com"
+	default:
+		return "AzureMonitor"
+	}
 }
 
 func randomAzureStorageAccount() string {
