@@ -325,6 +325,7 @@ func randomLogString(size int) string {
 // Azure-specific randomizers
 
 var azureRegions = []string{"eastus", "westus", "centralus", "northeurope", "westeurope", "southeastasia", "japaneast", "australiaeast"}
+
 // azureCategories mirrors the eight activity log categories supported by the
 // opentelemetry-collector-contrib azurelogs translator.
 var azureCategories = []string{
@@ -557,4 +558,3 @@ func randomAzureServicePrincipal(category string) string {
 		return "AzureMonitor"
 	}
 }
-

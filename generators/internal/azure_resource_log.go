@@ -112,9 +112,9 @@ type azureIdentity struct {
 // The Evidence field follows the translator's schema
 // (https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema).
 type azureAuthorization struct {
-	Scope    string           `json:"scope,omitempty"`
-	Action   string           `json:"action,omitempty"`
-	Evidence *azureEvidence   `json:"evidence,omitempty"`
+	Scope    string         `json:"scope,omitempty"`
+	Action   string         `json:"action,omitempty"`
+	Evidence *azureEvidence `json:"evidence,omitempty"`
 }
 
 // azureEvidence holds role-assignment details inside an authorization block.
@@ -164,7 +164,7 @@ func buildAzureResourceLog() azureResourceLog {
 					RoleAssignmentScope: "/subscriptions/" + subscriptionID,
 					RoleAssignmentID:    randomAZaz09String(32),
 					RoleDefinitionID:    randomAZaz09String(32),
-					PrincipalID:        randomAZaz09String(32),
+					PrincipalID:         randomAZaz09String(32),
 					PrincipalType:       "User",
 				},
 			},
