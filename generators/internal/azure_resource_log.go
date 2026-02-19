@@ -2,6 +2,8 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -105,10 +107,22 @@ type azureIdentity struct {
 }
 
 // azureAuthorization contains authorization details for the Azure operation.
+// The Evidence field follows the translator's schema
+// (https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema).
 type azureAuthorization struct {
-	Scope  string `json:"scope,omitempty"`
-	Action string `json:"action,omitempty"`
-	Role   string `json:"role,omitempty"`
+	Scope    string         `json:"scope,omitempty"`
+	Action   string         `json:"action,omitempty"`
+	Evidence *azureEvidence `json:"evidence,omitempty"`
+}
+
+// azureEvidence holds role-assignment details inside an authorization block.
+type azureEvidence struct {
+	Role                string `json:"role,omitempty"`
+	RoleAssignmentScope string `json:"roleAssignmentScope,omitempty"`
+	RoleAssignmentID    string `json:"roleAssignmentId,omitempty"`
+	RoleDefinitionID    string `json:"roleDefinitionId,omitempty"`
+	PrincipalID         string `json:"principalId,omitempty"`
+	PrincipalType       string `json:"principalType,omitempty"`
 }
 
 func buildAzureResourceLog() azureResourceLog {
@@ -135,20 +149,40 @@ func buildAzureResourceLog() azureResourceLog {
 		log.ResultDescription = randomAzureErrorDescription()
 	}
 
-	// Add identity for certain operation types
-	if shouldHaveIdentity(operationName) {
+	// Administrative and Policy logs carry a full authorization+claims identity;
+	// other categories use only a minimal claims block.
+	if shouldHaveFullIdentity(category) {
+		subscriptionID := randomAzureGUID()
+
+		now := time.Now().Unix()
+
 		log.Identity = &azureIdentity{
 			Authorization: &azureAuthorization{
 				Scope:  randomAzureResourceID(),
-				Action: randomAzureAction(),
-				Role:   randomAzureRole(),
+				Action: operationName,
+				Evidence: &azureEvidence{
+					Role:                randomAzureRole(),
+					RoleAssignmentScope: "/subscriptions/" + subscriptionID,
+					RoleAssignmentID:    randomAZaz09String(32),
+					RoleDefinitionID:    randomAZaz09String(32),
+					PrincipalID:         randomAZaz09String(32),
+					PrincipalType:       "User",
+				},
 			},
 			Claims: map[string]string{
-				"aud": "https://management.azure.com/",
-				"iss": "https://sts.windows.net/" + randomAzureGUID() + "/",
-				"iat": "1234567890",
-				"nbf": "1234567890",
-				"exp": "1234567890",
+				"aud":    "https://management.core.windows.net/",
+				"iss":    "https://sts.windows.net/" + randomAzureGUID() + "/",
+				"iat":    strconv.FormatInt(now-int64(rand.Intn(300)), 10), // issued up to 5 min ago
+				"nbf":    strconv.FormatInt(now, 10),                       // not valid before now
+				"exp":    strconv.FormatInt(now+int64(3600), 10),           // expires in 1 hour
+				"name":   randomAzureUserName(),
+				"ipaddr": randomIP(),
+			},
+		}
+	} else {
+		log.Identity = &azureIdentity{
+			Claims: map[string]string{
+				"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/spn": randomAzureServicePrincipal(category),
 			},
 		}
 	}
@@ -159,44 +193,151 @@ func buildAzureResourceLog() azureResourceLog {
 	return log
 }
 
-func shouldHaveIdentity(operationName string) bool {
-	// Add identity for write operations
-	return operationName == "Microsoft.Storage/storageAccounts/write" ||
-		operationName == "Microsoft.Compute/virtualMachines/write" ||
-		operationName == "Microsoft.Network/networkSecurityGroups/securityRules/write" ||
-		operationName == "Microsoft.KeyVault/vaults/secrets/write"
+// shouldHaveFullIdentity returns true for categories that carry a full
+// identity object (authorization + claims) in real Azure activity logs.
+func shouldHaveFullIdentity(category string) bool {
+	return category == "Administrative" || category == "Policy"
 }
 
+// generateAzureProperties returns a properties map whose keys match the
+// schemas expected by the opentelemetry-collector-contrib azurelogs translator.
+// See: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/translator/azurelogs
 func generateAzureProperties(category, operationName string) map[string]interface{} {
 	props := make(map[string]interface{})
 
 	switch category {
 	case "Administrative":
+		// administrativeLogProperties: entity, message, hierarchy (+ eventCategory)
+		resourceID := randomAzureResourceID()
+		tenantID := randomAzureGUID()
+		subscriptionID := randomAzureGUID()
 		props["eventCategory"] = "Administrative"
-		props["eventDataId"] = randomAzureGUID()
-		props["operationId"] = randomAzureGUID()
-		props["httpRequest"] = map[string]interface{}{
-			"clientRequestId": randomAzureGUID(),
-			"clientIpAddress": randomIP(),
-			"method":          randomHTTPMethod(),
-		}
+		props["entity"] = resourceID
+		props["message"] = operationName
+		props["hierarchy"] = tenantID + "/" + subscriptionID
+
 	case "Security":
-		props["securityEventType"] = randomAzureSecurityEventType()
-		props["protocol"] = randomAzureProtocol()
-		props["direction"] = randomAzureDirection()
+		// securityLogProperties: accountLogonId, commandLine, domainName,
+		// parentProcess, parentProcessid, processId, processName,
+		// userName, UserSID, ActionTaken, Severity
+		processName := fmt.Sprintf("c:\\windows\\system32\\%s.exe", randomAZaz09String(6))
+		props["eventCategory"] = "Security"
+		props["accountLogonId"] = fmt.Sprintf("0x%s", randomAZaz09String(4))
+		props["commandLine"] = processName
+		props["domainName"] = randomAZaz09String(6)
+		props["parentProcess"] = "explorer.exe"
+		props["parentProcess id"] = fmt.Sprintf("%d", rand.Intn(9000)+1000)
+		props["processId"] = fmt.Sprintf("%d", rand.Intn(9000)+1000)
+		props["processName"] = processName
+		props["userName"] = fmt.Sprintf("user%s", randomAZaz09String(4))
+		props["UserSID"] = fmt.Sprintf("S-1-5-21-%d-%d-%d", rand.Intn(9999999), rand.Intn(9999999), rand.Intn(9999999))
+		props["ActionTaken"] = randomAzureSecurityActionTaken()
+		props["Severity"] = randomAzureSecuritySeverity()
+
 	case "ServiceHealth":
-		props["eventType"] = "ServiceIssue"
-		props["trackingId"] = randomAzureGUID()
+		// serviceHealthLogProperties: title, service, region, communication,
+		// communicationId, incidentType, trackingId, impactStartTime,
+		// impactMitigationTime, impactedServices
+		service := randomAzureServiceName()
+		region := randomAzureRegion()
+		trackingID := randomAZaz09String(8)
+		impactStart := time.Now().UTC().Add(-time.Duration(rand.Intn(72)) * time.Hour)
+		props["title"] = fmt.Sprintf("Service issue with %s in %s", service, region)
+		props["service"] = service
+		props["region"] = region
+		props["communication"] = fmt.Sprintf("We are aware of an issue with %s in %s and are actively investigating.", service, region)
+		props["communicationId"] = randomAZaz09String(12)
 		props["incidentType"] = randomAzureIncidentType()
+		props["trackingId"] = trackingID
+		props["impactStartTime"] = impactStart.Format(time.RFC3339Nano)
+		props["impactMitigationTime"] = impactStart.Add(time.Duration(rand.Intn(24)+1) * time.Hour).Format(time.RFC3339Nano)
+		props["impactedServices"] = fmt.Sprintf(
+			`[{"ImpactedRegions":[{"RegionName":"%s"}],"ServiceName":"%s"}]`,
+			region, service,
+		)
+		props["stage"] = "Active"
+		props["isHIR"] = false
+		props["IsSynthetic"] = "False"
+
 	case "ResourceHealth":
-		props["currentHealthStatus"] = randomAzureHealthStatus()
-		props["previousHealthStatus"] = randomAzureHealthStatus()
+		// resourceHealthLogProperties: title, details, currentHealthStatus,
+		// previousHealthStatus, type, cause
+		currentStatus := randomAzureHealthStatus()
+		previousStatus := randomAzureHealthStatus()
+		props["title"] = currentStatus
+		props["details"] = fmt.Sprintf("Resource transitioned from %s to %s", previousStatus, currentStatus)
+		props["currentHealthStatus"] = currentStatus
+		props["previousHealthStatus"] = previousStatus
+		props["type"] = randomAzureHealthType()
 		props["cause"] = randomAzureHealthCause()
-	case "StorageRead", "StorageWrite", "StorageDelete":
-		props["requestUrl"] = "https://" + randomAzureStorageAccount() + ".blob.core.windows.net/" + randomBlobPath()
-		props["userAgentHeader"] = randomUserAgent()
-		props["statusCode"] = randomHTTPStatusCode()
-		props["serverLatencyMs"] = randomDurationMs()
+
+	case "Alert":
+		// alertLogProperties: RuleUri, RuleName, RuleDescription, Threshold,
+		// WindowSizeInMinutes, Aggregation, Operator, MetricName, MetricUnit
+		ruleName := fmt.Sprintf("alert-%s", randomAZaz09String(6))
+		resourceID := randomAzureResourceID()
+		props["RuleUri"] = resourceID + "/providers/microsoft.insights/alertrules/" + ruleName
+		props["RuleName"] = ruleName
+		props["RuleDescription"] = fmt.Sprintf("Alert rule for %s", randomAzureAlertMetricName())
+		props["Threshold"] = fmt.Sprintf("%d", rand.Intn(99000)+1000)
+		props["WindowSizeInMinutes"] = fmt.Sprintf("%d", []int{5, 10, 15, 30, 60}[rand.Intn(5)])
+		props["Aggregation"] = randomAzureAlertAggregation()
+		props["Operator"] = randomAzureAlertOperator()
+		props["MetricName"] = randomAzureAlertMetricName()
+		props["MetricUnit"] = "Count"
+
+	case "Recommendation":
+		// recommendationLogProperties: recommendationSchemaVersion,
+		// recommendationCategory, recommendationImpact, recommendationName,
+		// recommendationResourceLink, recommendationType
+		recommendationType := randomAzureRecommendationType()
+		resourceID := randomAzureResourceID()
+		props["recommendationSchemaVersion"] = "1.0"
+		props["recommendationCategory"] = randomAzureRecommendationCategory()
+		props["recommendationImpact"] = randomAzureRecommendationImpact()
+		props["recommendationName"] = randomAzureRecommendationName()
+		props["recommendationResourceLink"] = fmt.Sprintf(
+			"https://portal.azure.com/#blade/Microsoft_Azure_Expert/RecommendationListBlade/recommendationTypeId/%s/resourceId/%s",
+			recommendationType, resourceID,
+		)
+		props["recommendationType"] = recommendationType
+
+	case "Policy":
+		// policyLogProperties: isComplianceCheck, resourceLocation, ancestors,
+		// policies (JSON string), eventCategory, entity, message, hierarchy
+		subscriptionID := randomAzureGUID()
+		resourceID := randomAzureResourceID()
+		policyDefID := randomAzurePolicyDefinitionID()
+		policyJSON := fmt.Sprintf(
+			`[{"policyDefinitionId":"%s","policyDefinitionEffect":"AuditIfNotExists","policyAssignmentScope":"/subscriptions/%s"}]`,
+			policyDefID, subscriptionID,
+		)
+		props["isComplianceCheck"] = "False"
+		props["resourceLocation"] = randomAzureRegion()
+		props["ancestors"] = subscriptionID
+		props["policies"] = policyJSON
+		props["eventCategory"] = "Policy"
+		props["entity"] = resourceID
+		props["message"] = operationName
+		props["hierarchy"] = ""
+
+	case "Autoscale":
+		// autoscaleLogProperties: Description, ResourceName, OldInstancesCount,
+		// NewInstancesCount, LastScaleActionTime
+		resourceName := randomAzureResourceID()
+		oldCount := rand.Intn(8) + 2
+		newCount := oldCount + []int{-1, 1}[rand.Intn(2)]
+		if newCount < 1 {
+			newCount = 1
+		}
+		props["Description"] = fmt.Sprintf(
+			"The autoscale engine attempting to scale resource '%s' from %d instances count to %d instances count.",
+			resourceName, oldCount, newCount,
+		)
+		props["ResourceName"] = resourceName
+		props["OldInstancesCount"] = fmt.Sprintf("%d", oldCount)
+		props["NewInstancesCount"] = fmt.Sprintf("%d", newCount)
+		props["LastScaleActionTime"] = time.Now().UTC().Format(time.RFC1123)
 	}
 
 	return props
