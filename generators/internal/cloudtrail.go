@@ -16,10 +16,10 @@ type CloudTrail struct {
 	outputType  string
 }
 
-func NewCloudTrailGen(conf conf.OutputConfig) *CloudTrail {
+func NewCloudTrailGen(cfg conf.OutputConfig) *CloudTrail {
 	return &CloudTrail{
 		current:    []cloudTrailRecord{},
-		outputType: conf.Type,
+		outputType: cfg.Type,
 	}
 }
 

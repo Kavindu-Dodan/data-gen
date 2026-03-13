@@ -95,13 +95,13 @@ func (cfg *Config) Print() string {
 func (cfg *Config) UsesAWS() bool {
 	// Check if output type requires AWS
 	switch cfg.Output.Type {
-	case "S3", "FIREHOSE", "CLOUDWATCH_LOG":
+	case OutputS3, OutputFirehose, OutputCWLogs:
 		return true
 	}
 
 	// Check if input type is AWS-specific (may need AWS config for region/profile context)
 	switch cfg.Input.Type {
-	case "ALB", "NLB", "VPC", "WAF", "CLOUDTRAIL":
+	case InputALB, InputNLB, InputVPC, InputWAF, InputCT:
 		return true
 	}
 
