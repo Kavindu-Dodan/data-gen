@@ -41,6 +41,22 @@ const (
 
 	EnvAWSRegion  = "AWS_REGION"
 	EnvAWSProfile = "AWS_PROFILE"
+
+	InputLogs    = "LOGS"
+	InputMetrics = "METRICS"
+	InputALB     = "ALB"
+	InputNLB     = "NLB"
+	InputVPC     = "VPC"
+	InputWAF     = "WAF"
+	InputCT      = "CLOUDTRAIL"
+	InputAzures  = "AZURE_RESOURCE_LOGS"
+
+	OutputFile     = "FILE"
+	OutputS3       = "S3"
+	OutputFirehose = "FIREHOSE"
+	OutputCWLogs   = "CLOUDWATCH_LOG"
+	OutputEventHub = "EVENTHUB"
+	OutputDebug    = "DEBUG"
 )
 
 // Config holds the complete configuration for the data generator including input, output, and AWS settings.
@@ -79,13 +95,13 @@ func (cfg *Config) Print() string {
 func (cfg *Config) UsesAWS() bool {
 	// Check if output type requires AWS
 	switch cfg.Output.Type {
-	case "S3", "FIREHOSE", "CLOUDWATCH_LOG":
+	case OutputS3, OutputFirehose, OutputCWLogs:
 		return true
 	}
 
 	// Check if input type is AWS-specific (may need AWS config for region/profile context)
 	switch cfg.Input.Type {
-	case "ALB", "NLB", "VPC", "WAF", "CLOUDTRAIL":
+	case InputALB, InputNLB, InputVPC, InputWAF, InputCT:
 		return true
 	}
 

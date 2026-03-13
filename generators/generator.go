@@ -10,17 +10,6 @@ import (
 	"data-gen/internal/runtime"
 )
 
-const (
-	logs              = "LOGS"
-	metrics           = "METRICS"
-	alb               = "ALB"
-	nlb               = "NLB"
-	vpc               = "VPC"
-	waf               = "WAF"
-	cloudTrail        = "CLOUDTRAIL"
-	azureResourceLogs = "AZURE_RESOURCE_LOGS"
-)
-
 type input interface {
 	// Generate and accumulate data and must return the accumulated size of the total generated data
 	Generate() (int64, error)
@@ -31,21 +20,21 @@ type input interface {
 func GeneratorFor(cfg *conf.Config, runtime runtime.Runtime) (*Generator, error) {
 	var in input
 	switch cfg.Input.Type {
-	case logs:
+	case conf.InputLogs:
 		in = internal.NewLogGenerator()
-	case metrics:
+	case conf.InputMetrics:
 		in = internal.NewMetricGenerator()
-	case alb:
+	case conf.InputALB:
 		in = internal.NewALBGen()
-	case nlb:
+	case conf.InputNLB:
 		in = internal.NewNLBGen()
-	case vpc:
-		in = internal.NewVPCGen()
-	case waf:
+	case conf.InputVPC:
+		in = internal.NewVPCGen(cfg.Output)
+	case conf.InputWAF:
 		in = internal.NewWAFGen()
-	case cloudTrail:
-		in = internal.NewCloudTrailGen()
-	case azureResourceLogs:
+	case conf.InputCT:
+		in = internal.NewCloudTrailGen(cfg.Output)
+	case conf.InputAzures:
 		in = internal.NewAzureResourceLogGen(cfg.Input)
 	default:
 		return nil, fmt.Errorf("unknown generator type: %s", cfg.Input.Type)
