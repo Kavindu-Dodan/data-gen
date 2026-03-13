@@ -116,16 +116,16 @@ Given below are supported input types and their related environment variable ove
 
 Given below are supported `type` values for input,
 
-| Log Type              | Description                                                                                             |
-|-----------------------|---------------------------------------------------------------------------------------------------------|
-| `ALB`                 | Generate AWS ALB formatted logs with some random content                                                |
-| `NLB`                 | Generate AWS NLB formatted logs with some random content                                                |
-| `VPC`                 | Generate AWS VPC formatted logs with randomized content                                                 |
-| `CLOUDTRAIL`          | Generate AWS CloudTrail formatted logs with randomized content. Data is generated for AWS S3 Data Event |
-| `WAF`                 | Generate AWS WAF formatted logs with randomized content                                                 |
-| `AZURE_RESOURCE_LOGS` | Generate Azure Resource logs with randomized content                                                    |
-| `LOGS`                | ECS (Elastic Common Schema) formatted logs based on zap                                                 |
-| `METRICS`             | Generate metrics similar to a CloudWatch metrics entry                                                  |
+| Log Type              | Description                                                                                             | Note                                |
+|-----------------------|---------------------------------------------------------------------------------------------------------|-------------------------------------|
+| `ALB`                 | Generate AWS ALB formatted logs with randomized content                                                 |                                     |
+| `NLB`                 | Generate AWS NLB formatted logs with randomized content                                                 |                                     |
+| `VPC`                 | Generate AWS VPC formatted logs with randomized content                                                 | Supports CloudWatch log destination |
+| `CLOUDTRAIL`          | Generate AWS CloudTrail formatted logs with randomized content. Data is generated for AWS S3 Data Event | Supports CloudWatch log destination |
+| `WAF`                 | Generate AWS WAF formatted logs with randomized content                                                 |                                     |
+| `AZURE_RESOURCE_LOGS` | Generate Azure Resource logs with randomized content                                                    |                                     |
+| `LOGS`                | ECS (Elastic Common Schema) formatted logs based on zap                                                 |                                     |
+| `METRICS`             | Generate metrics similar to a CloudWatch metrics entry                                                  |                                     |
 
 Example:
 

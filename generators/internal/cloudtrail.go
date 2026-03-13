@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"data-gen/conf"
+
 	"encoding/json"
 	"math/rand/v2"
 
@@ -11,11 +13,13 @@ import (
 type CloudTrail struct {
 	current     []cloudTrailRecord
 	currentSize int64
+	outputType  string
 }
 
-func NewCloudTrailGen() *CloudTrail {
+func NewCloudTrailGen(conf conf.OutputConfig) *CloudTrail {
 	return &CloudTrail{
-		current: []cloudTrailRecord{},
+		current:    []cloudTrailRecord{},
+		outputType: conf.Type,
 	}
 }
 
@@ -73,7 +77,17 @@ func (c *CloudTrail) Generate() (int64, error) {
 }
 
 func (c *CloudTrail) GetAndReset() []byte {
-	marshal, _ := json.Marshal(cloudTrailLogFor(c.current))
+	var marshal []byte
+
+	// If output is CloudWatch Logs, we emit only the first record.
+	// Otherwise, we wrap them in the standard CloudTrail log format.
+	if c.outputType == conf.OutputCWLogs {
+		marshal, _ = json.Marshal(c.current[0])
+
+	} else {
+		marshal, _ = json.Marshal(cloudTrailLogFor(c.current))
+	}
+
 	c.current = []cloudTrailRecord{} // Reset current records
 	c.currentSize = 0                // Reset current size
 	return marshal

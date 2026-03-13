@@ -13,13 +13,6 @@ import (
 )
 
 const (
-	file          = "FILE"
-	s3            = "S3"
-	firehose      = "FIREHOSE"
-	cloudwatchLog = "CLOUDWATCH_LOG"
-	eventhub      = "EVENTHUB"
-	debug         = "DEBUG"
-
 	defaultShutdownWait = 2 * time.Second
 )
 
@@ -32,33 +25,33 @@ func ExporterFor(ctx context.Context, cfg *conf.Config, runtime runtime.Runtime)
 	var err error
 
 	switch cfg.Output.Type {
-	case file:
+	case conf.OutputFile:
 		exporter, err = internal.NewFileExporter(cfg)
 		if err != nil {
 			return nil, err
 		}
-	case s3:
+	case conf.OutputS3:
 		exporter, err = internal.NewS3BucketExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-	case firehose:
+	case conf.OutputFirehose:
 		exporter, err = internal.NewFirehoseExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
 
-	case cloudwatchLog:
+	case conf.OutputCWLogs:
 		exporter, err = internal.NewCloudWatchLogExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-	case eventhub:
+	case conf.OutputEventHub:
 		exporter, err = internal.NewEventHubExporter(ctx, cfg)
 		if err != nil {
 			return nil, err
 		}
-	case debug:
+	case conf.OutputDebug:
 		exporter, err = internal.NewDebugExporter(cfg)
 		if err != nil {
 			return nil, err

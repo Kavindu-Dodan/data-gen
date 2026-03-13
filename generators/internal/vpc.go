@@ -2,6 +2,8 @@ package internal
 
 import (
 	"fmt"
+
+	"data-gen/conf"
 	"math/rand/v2"
 )
 
@@ -9,21 +11,25 @@ const header = "version account-id interface-id srcaddr dstaddr srcport dstport 
 
 // VPCGen generates AWS VPC Flow Logs with header initialization.
 type VPCGen struct {
-	buf  trackedBuffer
-	init bool
+	buf        trackedBuffer
+	init       bool
+	outputType string
 }
 
-func NewVPCGen() *VPCGen {
+func NewVPCGen(cfg conf.OutputConfig) *VPCGen {
 	return &VPCGen{
-		buf:  newTrackedBuffer(),
-		init: true,
+		buf:        newTrackedBuffer(),
+		init:       true,
+		outputType: cfg.Type,
 	}
 }
 
 func (v *VPCGen) Generate() (int64, error) {
 	var data []byte
 
-	if v.init {
+	// If first run and output is not CloudWatch Logs, include the header line.
+	// VPC logs through CloudWatch Logs does not include header, so we skip it in that case.
+	if v.init && v.outputType != conf.OutputCWLogs {
 		v.init = false
 		data = []byte(fmt.Sprintf("%s\n", header))
 	}

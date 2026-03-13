@@ -41,6 +41,22 @@ const (
 
 	EnvAWSRegion  = "AWS_REGION"
 	EnvAWSProfile = "AWS_PROFILE"
+
+	InputLogs    = "LOGS"
+	InputMetrics = "METRICS"
+	InputALB     = "ALB"
+	InputNLB     = "NLB"
+	InputVPC     = "VPC"
+	InputWAF     = "WAF"
+	InputCT      = "CLOUDTRAIL"
+	InputAzures  = "AZURE_RESOURCE_LOGS"
+
+	OutputFile     = "FILE"
+	OutputS3       = "S3"
+	OutputFirehose = "FIREHOSE"
+	OutputCWLogs   = "CLOUDWATCH_LOG"
+	OutputEventHub = "EVENTHUB"
+	OutputDebug    = "DEBUG"
 )
 
 // Config holds the complete configuration for the data generator including input, output, and AWS settings.
