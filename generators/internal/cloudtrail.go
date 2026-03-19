@@ -1,10 +1,11 @@
 package internal
 
 import (
-	"data-gen/conf"
-
+	"bytes"
 	"encoding/json"
 	"math/rand/v2"
+
+	"data-gen/conf"
 
 	"github.com/google/uuid"
 )
@@ -79,11 +80,19 @@ func (c *CloudTrail) Generate() (int64, error) {
 func (c *CloudTrail) GetAndReset() []byte {
 	var marshal []byte
 
-	// If output is CloudWatch Logs, we emit only the first record.
-	// Otherwise, we wrap them in the standard CloudTrail log format.
+	// CloudWatch Logs: emit each record as a separate JSON line (NDJSON)
+	// so the CloudWatch exporter sends one record per log event.
+	// S3: wrap all records in the standard CloudTrail {"Records": [...]} format.
 	if c.outputType == conf.OutputCWLogs {
-		marshal, _ = json.Marshal(c.current[0])
-
+		var buf bytes.Buffer
+		for i, record := range c.current {
+			line, _ := json.Marshal(record)
+			buf.Write(line)
+			if i < len(c.current)-1 {
+				buf.WriteByte('\n')
+			}
+		}
+		marshal = buf.Bytes()
 	} else {
 		marshal, _ = json.Marshal(cloudTrailLogFor(c.current))
 	}

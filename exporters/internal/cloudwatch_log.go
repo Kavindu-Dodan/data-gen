@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"data-gen/conf"
@@ -59,20 +60,36 @@ func NewCloudWatchLogExporter(ctx context.Context, c *conf.Config) (*CloudWatchE
 }
 
 func (ce CloudWatchExporter) Send(data *[]byte) error {
+	now := time.Now().UnixMilli()
+
+	// Split batched payloads into individual log events.
+	// When batching is enabled, the generator concatenates multiple records
+	// separated by newlines into a single []byte payload.
+	lines := strings.Split(strings.TrimRight(string(*data), "\n"), "\n")
+	logEvents := make([]types.InputLogEvent, 0, len(lines))
+	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+		logEvents = append(logEvents, types.InputLogEvent{
+			Message:   aws.String(line),
+			Timestamp: aws.Int64(now),
+		})
+	}
+
+	if len(logEvents) == 0 {
+		return nil
+	}
+
 	record := cloudwatchlogs.PutLogEventsInput{
 		LogGroupName:  aws.String(ce.cfg.LogGroupName),
 		LogStreamName: aws.String(ce.cfg.LogStreamName),
-		LogEvents: []types.InputLogEvent{
-			{
-				Message:   aws.String(string(*data)),
-				Timestamp: aws.Int64(time.Now().UnixMilli()),
-			},
-		},
+		LogEvents:     logEvents,
 	}
 
 	_, err := ce.cloudwatchClient.PutLogEvents(context.Background(), &record)
 	if err != nil {
-		return fmt.Errorf("unable to write to cloudwatch log group  %s: %w", ce.cfg.LogGroupName, err)
+		return fmt.Errorf("unable to write to cloudwatch log group %s: %w", ce.cfg.LogGroupName, err)
 	}
 
 	return nil
