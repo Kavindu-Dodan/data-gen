@@ -72,6 +72,7 @@ type Exporter struct {
 	shChan  chan struct{}
 
 	sending sync.Mutex
+	wg      sync.WaitGroup
 }
 
 func newExporter(cfg *conf.Config, rt runtime.Runtime, output output) *Exporter {
@@ -85,14 +86,20 @@ func newExporter(cfg *conf.Config, rt runtime.Runtime, output output) *Exporter 
 }
 
 func (e *Exporter) Start(data <-chan *[]byte) <-chan error {
+	e.wg.Add(1)
 	go func() {
+		defer e.wg.Done()
 		for {
 			select {
 			case d := <-data:
 				e.sending.Lock()
 				err := e.output.Send(d)
 				if err != nil {
-					e.errChan <- err
+					// Don't block forever; the main loop only needs the first error.
+					select {
+					case e.errChan <- err:
+					default:
+					}
 				}
 				e.sending.Unlock()
 			case <-e.shChan:
@@ -106,7 +113,6 @@ func (e *Exporter) Start(data <-chan *[]byte) <-chan error {
 }
 
 func (e *Exporter) Stop() {
-	close(e.errChan)
 	close(e.shChan)
 
 	if e.cfg.Output.WaitForCompletion {
@@ -114,9 +120,13 @@ func (e *Exporter) Stop() {
 		e.sending.Lock()
 		// nolint: staticcheck
 		e.sending.Unlock()
+		e.wg.Wait()
+		close(e.errChan)
 		return
 	}
 
 	slog.Info("Shutting down exporter")
 	time.Sleep(defaultShutdownWait)
+	e.wg.Wait()
+	close(e.errChan)
 }
