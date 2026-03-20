@@ -112,7 +112,7 @@ Given below are supported input types and their related environment variable ove
 > [!NOTE]
 > You must define one of the terminal conditions for batching ([Batching]) or runtime ([Runtime]).
 > For example, define one of `max_data_points` or `max_runtime` when  `max_batch_size`, `max_batch_elements` or `batching` duration is not set.
-> On the other hand, for example when batching duration is set, you can run load generator indefinitely without defining runtime ([Runtime]) limits.
+> On the other hand, when batching duration is set, you can run load generator indefinitely without defining runtime ([Runtime]) limits.
 
 Given below are supported `type` values for input,
 
@@ -214,9 +214,9 @@ output:
 ```
 
 > [!NOTE]
-> CloudWatch Logs API (`PutLogEvents`) is optimized for single log messages per API call. When batching is enabled, multiple log entries are concatenated into a single message, which may not be ideal for log analysis and searching in CloudWatch. For CloudWatch destinations, consider setting `batching: 0s` (no batching) or using a small delay without batching. Batching is more suitable for bulk ingest endpoints like S3 and Firehose.
-
-
+> CloudWatch Logs API (`PutLogEvents`) is optimized for single log messages per API call. 
+> The CloudWatch exporter perform new line delimited log extraction when exporting batches to CloudWatch Logs.
+ 
 #### EVENTHUB
 
 | YAML Property       | Environment Variable                 | Description                                     |

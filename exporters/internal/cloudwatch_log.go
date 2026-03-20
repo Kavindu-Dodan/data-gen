@@ -101,7 +101,7 @@ func ensureStreams(ctx context.Context, client *cloudwatchlogs.Client, cfg cwLog
 	}
 
 	streams := make([]string, cfg.StreamCount)
-	for i := range cfg.StreamCount {
+	for i := 0; i < cfg.StreamCount; i++ {
 		name := cfg.LogStreamName
 		if cfg.StreamCount > 1 {
 			name = fmt.Sprintf("%s-%d", cfg.LogStreamName, i)
@@ -160,7 +160,8 @@ func (ce *CloudWatchExporter) Send(data *[]byte) error {
 		eventSize := len(*event.Message) + perEventOverhead
 
 		if len(chunk) >= maxEventsPerPut || (chunkBytes+eventSize > maxBytesPerPut && len(chunk) > 0) {
-			chunks = append(chunks, streamChunk{stream: ce.nextStreamName(), events: chunk})
+			eventsCopy := append([]types.InputLogEvent(nil), chunk...)
+			chunks = append(chunks, streamChunk{stream: ce.nextStreamName(), events: eventsCopy})
 			chunk = chunk[:0]
 			chunkBytes = 0
 		}
@@ -170,7 +171,8 @@ func (ce *CloudWatchExporter) Send(data *[]byte) error {
 	}
 
 	if len(chunk) > 0 {
-		chunks = append(chunks, streamChunk{stream: ce.nextStreamName(), events: chunk})
+		eventsCopy := append([]types.InputLogEvent(nil), chunk...)
+		chunks = append(chunks, streamChunk{stream: ce.nextStreamName(), events: eventsCopy})
 	}
 
 	return ce.putChunksParallel(chunks)
