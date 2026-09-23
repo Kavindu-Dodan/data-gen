@@ -1,7 +1,7 @@
 .PHONY: install-tools
 install-tools:
 	mkdir -p tools
-	GOBIN=$(PWD)/tools go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	GOBIN=$(PWD)/tools go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2
 	GOBIN=$(PWD)/tools go install golang.org/x/tools/cmd/goimports@latest
 
 .PHONY: test

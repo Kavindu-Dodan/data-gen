@@ -131,21 +131,21 @@ func newDefaultInputConfig() *InputConfig {
 func (cfg *InputConfig) Print() string {
 	sb := strings.Builder{}
 
-	sb.WriteString(fmt.Sprintf("Type: %s", cfg.Type))
+	fmt.Fprintf(&sb, "Type: %s", cfg.Type)
 	if cfg.Delay != "" && cfg.Delay != defaultDelay {
-		sb.WriteString(fmt.Sprintf(", Delay: %s", cfg.Delay))
+		fmt.Fprintf(&sb, ", Delay: %s", cfg.Delay)
 	}
 	if cfg.Batching != "" && cfg.Batching != defaultBatching {
-		sb.WriteString(fmt.Sprintf(", Batching: %s", cfg.Batching))
+		fmt.Fprintf(&sb, ", Batching: %s", cfg.Batching)
 	}
 	if cfg.MaxBatchSize > 0 {
-		sb.WriteString(fmt.Sprintf(", Max Batch Size: %d bytes", cfg.MaxBatchSize))
+		fmt.Fprintf(&sb, ", Max Batch Size: %d bytes", cfg.MaxBatchSize)
 	}
 	if cfg.MaxDataPoints > 0 {
-		sb.WriteString(fmt.Sprintf(", Max Data Points: %d", cfg.MaxDataPoints))
+		fmt.Fprintf(&sb, ", Max Data Points: %d", cfg.MaxDataPoints)
 	}
 	if cfg.MaxRunTime != "" && cfg.MaxRunTime != defaultMaxDuration {
-		sb.WriteString(fmt.Sprintf(", Max Runtime: %s", cfg.MaxRunTime))
+		fmt.Fprintf(&sb, ", Max Runtime: %s", cfg.MaxRunTime)
 	}
 
 	return sb.String()
@@ -217,8 +217,8 @@ func NewConfig(input []byte) (*Config, error) {
 
 func (c *AWSCfg) Print() string {
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("Profile: %s, ", c.Profile))
-	sb.WriteString(fmt.Sprintf("Region: %s", c.Region))
+	fmt.Fprintf(&sb, "Profile: %s, ", c.Profile)
+	fmt.Fprintf(&sb, "Region: %s", c.Region)
 
 	return sb.String()
 }
